@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/siyavuyachagi/typesharp.git"
   },
-  "homepage": "https://github.com/siyavuyachagi/typesharp#readme",
+  "homepage": "https://typesharp.netlify.app",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
