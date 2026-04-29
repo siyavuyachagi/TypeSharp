@@ -2,224 +2,179 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import * as fs from 'fs'
-import * as path from 'path'
 import * as os from 'os'
-import type { EventEmitter } from 'events'
+import * as path from 'path'
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
 
-vi.mock('../../src/core/index.js', () => ({
-    generate: vi.fn(),
-    loadConfig: vi.fn(),
+vi.mock('../../src/core/index.ts', () => ({
+  generate: vi.fn(),
+  loadConfig: vi.fn(),
 }))
 
-// Static imports — vi.mock is hoisted above these by vitest
-import { startWatch } from '../../src/core/watch.js'
-import { generate, loadConfig } from '../../src/core/index.js'
+vi.mock('../../src/helpers/watcher.ts', () => ({
+  watchDirectory: vi.fn(),
+}))
+
+import { startWatch } from '../../src/core/watch.ts'
+import { generate, loadConfig } from '../../src/core/index.ts'
+import { watchDirectory } from '../../src/helpers/watcher.ts'
 
 const mockGenerate = vi.mocked(generate)
 const mockLoadConfig = vi.mocked(loadConfig)
+const mockWatchDirectory = vi.mocked(watchDirectory)
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 type WatchCallback = (event: string, filename: string | null) => void
 
-function mockFsWatch(): { trigger: (filename: string) => void; restore: () => void } {
-    let capturedCallback: WatchCallback | null = null
+function mockFsWatch(): { trigger: (filename: string) => void; triggerNull: () => void } {
+  let capturedCallback: WatchCallback | null = null
+  const fakeWatcher = { close: vi.fn() }
 
-    const fakeWatcher = { close: vi.fn() }
+  mockWatchDirectory.mockImplementation((_dir: string, callback: WatchCallback) => {
+    capturedCallback = callback
+    return fakeWatcher as unknown as fs.FSWatcher
+  })
 
-    const spy = vi.spyOn(fs, 'watch').mockImplementation(
-        (_path: fs.PathLike, _options: unknown, callback?: WatchCallback) => {
-            if (typeof callback === 'function') capturedCallback = callback
-            return fakeWatcher as unknown as fs.FSWatcher & EventEmitter
-        }
-    )
-
-    return {
-        trigger: (filename: string) => capturedCallback?.('change', filename),
-        restore: () => spy.mockRestore(),
-    }
+  return {
+    trigger: (filename: string) => capturedCallback?.('change', filename),
+    triggerNull: () => capturedCallback?.('change', null),
+  }
 }
 
 function wait(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 // ─── Tests ──────────────────────────────────────────────────────────────────
 
 describe('startWatch', () => {
-    let tmpDir: string
+  let tmpDir: string
 
-    beforeEach(() => {
-        tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-watch-test-'))
-        vi.clearAllMocks()
-        // Re-apply implementations after clearAllMocks
-        mockGenerate.mockResolvedValue(undefined)
-        mockLoadConfig.mockResolvedValue({
-            source: './src',
-            outputPath: path.join(tmpDir, 'out'),
-        })
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-watch-test-'))
+    vi.clearAllMocks()
+    mockGenerate.mockResolvedValue(undefined)
+    mockLoadConfig.mockResolvedValue({
+      source: './src',
+      outputPath: path.join(tmpDir, 'out'),
     })
+  })
 
-    afterEach(() => {
-        fs.rmSync(tmpDir, { recursive: true, force: true })
-    })
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+  })
 
-    it('runs an initial generation on start', async () => {
-        const { trigger, restore } = mockFsWatch()
+  it('runs an initial generation on start', async () => {
+    mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(100)])
 
-        await Promise.race([startWatch(undefined, true), wait(100)])
+    expect(mockGenerate).toHaveBeenCalledTimes(1)
+    expect(mockGenerate).toHaveBeenCalledWith(undefined, true)
+  })
 
-        expect(mockGenerate).toHaveBeenCalledTimes(1)
-        expect(mockGenerate).toHaveBeenCalledWith(undefined, true)
+  it('passes incremental=true to initial generate', async () => {
+    mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(100)])
 
-        trigger('src/App.ts')
-        restore()
-    })
+    expect(mockGenerate).toHaveBeenCalledWith(undefined, true)
+  })
 
-    it('passes incremental=true to initial generate', async () => {
-        const { restore } = mockFsWatch()
+  it('passes incremental=false to initial generate when --no-incremental', async () => {
+    mockFsWatch()
+    await Promise.race([startWatch(undefined, false), wait(100)])
 
-        await Promise.race([startWatch(undefined, true), wait(100)])
+    expect(mockGenerate).toHaveBeenCalledWith(undefined, false)
+  })
 
-        expect(mockGenerate).toHaveBeenCalledWith(undefined, true)
-        restore()
-    })
+  it('triggers incremental generation after a file change', async () => {
+    const { trigger } = mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(50)])
 
-    it('passes incremental=false to initial generate when --no-incremental', async () => {
-        const { restore } = mockFsWatch()
+    trigger('src/pages/index.vue')
+    await wait(400)
 
-        await Promise.race([startWatch(undefined, false), wait(100)])
+    expect(mockGenerate).toHaveBeenCalledTimes(2)
+    expect(mockGenerate).toHaveBeenLastCalledWith(undefined, true)
+  })
 
-        expect(mockGenerate).toHaveBeenCalledWith(undefined, false)
-        restore()
-    })
+  it('debounces rapid file saves into a single generation', async () => {
+    const { trigger } = mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(50)])
 
-    it('triggers incremental generation after a file change', async () => {
-        const { trigger, restore } = mockFsWatch()
+    trigger('src/pages/index.vue')
+    trigger('src/pages/about.vue')
+    trigger('src/components/Header.vue')
+    trigger('src/components/Footer.vue')
+    trigger('src/app.ts')
+    await wait(400)
 
-        await Promise.race([startWatch(undefined, true), wait(50)])
+    expect(mockGenerate).toHaveBeenCalledTimes(2) // 1 initial + 1 debounced batch
+  })
 
-        trigger('src/pages/index.vue')
+  it('ignores changes inside node_modules', async () => {
+    const { trigger } = mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(50)])
+    const callsBefore = mockGenerate.mock.calls.length
 
-        // Wait for debounce (300ms) + buffer
-        await wait(400)
+    trigger('node_modules/some-package/index.js')
+    await wait(400)
 
-        // 1 initial + 1 debounced = 2 total
-        expect(mockGenerate).toHaveBeenCalledTimes(2)
-        expect(mockGenerate).toHaveBeenLastCalledWith(undefined, true)
+    expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
+  })
 
-        restore()
-    })
+  it('ignores changes inside .nuxt', async () => {
+    const { trigger } = mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(50)])
+    const callsBefore = mockGenerate.mock.calls.length
 
-    it('debounces rapid file saves into a single generation', async () => {
-        const { trigger, restore } = mockFsWatch()
+    trigger('.nuxt/types/schema.d.ts')
+    await wait(400)
 
-        await Promise.race([startWatch(undefined, true), wait(50)])
+    expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
+  })
 
-        trigger('src/pages/index.vue')
-        trigger('src/pages/about.vue')
-        trigger('src/components/Header.vue')
-        trigger('src/components/Footer.vue')
-        trigger('src/app.ts')
+  it('ignores changes inside .next', async () => {
+    const { trigger } = mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(50)])
+    const callsBefore = mockGenerate.mock.calls.length
 
-        await wait(400)
+    trigger('.next/cache/webpack/client-production/0.pack')
+    await wait(400)
 
-        // 1 initial + 1 debounced batch = 2 total
-        expect(mockGenerate).toHaveBeenCalledTimes(2)
+    expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
+  })
 
-        restore()
-    })
+  it('ignores changes inside .git', async () => {
+    const { trigger } = mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(50)])
+    const callsBefore = mockGenerate.mock.calls.length
 
-    it('ignores changes inside node_modules', async () => {
-        const { trigger, restore } = mockFsWatch()
+    trigger('.git/index')
+    await wait(400)
 
-        await Promise.race([startWatch(undefined, true), wait(50)])
+    expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
+  })
 
-        const callsBefore = mockGenerate.mock.calls.length
+  it('ignores null filename events', async () => {
+    const { triggerNull } = mockFsWatch()
+    await Promise.race([startWatch(undefined, true), wait(50)])
+    const callsBefore = mockGenerate.mock.calls.length
 
-        trigger('node_modules/some-package/index.js')
-        await wait(400)
+    triggerNull()
+    await wait(400)
 
-        expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
-        restore()
-    })
+    expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
+  })
 
-    it('ignores changes inside .nuxt', async () => {
-        const { trigger, restore } = mockFsWatch()
+  it('registers a SIGINT handler for clean exit', async () => {
+    mockFsWatch()
+    const onSpy = vi.spyOn(process, 'on')
 
-        await Promise.race([startWatch(undefined, true), wait(50)])
+    await Promise.race([startWatch(undefined, true), wait(50)])
 
-        const callsBefore = mockGenerate.mock.calls.length
-
-        trigger('.nuxt/types/schema.d.ts')
-        await wait(400)
-
-        expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
-        restore()
-    })
-
-    it('ignores changes inside .next', async () => {
-        const { trigger, restore } = mockFsWatch()
-
-        await Promise.race([startWatch(undefined, true), wait(50)])
-
-        const callsBefore = mockGenerate.mock.calls.length
-
-        trigger('.next/cache/webpack/client-production/0.pack')
-        await wait(400)
-
-        expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
-        restore()
-    })
-
-    it('ignores changes inside .git', async () => {
-        const { trigger, restore } = mockFsWatch()
-
-        await Promise.race([startWatch(undefined, true), wait(50)])
-
-        const callsBefore = mockGenerate.mock.calls.length
-
-        trigger('.git/index')
-        await wait(400)
-
-        expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
-        restore()
-    })
-
-    it('ignores null filename events', async () => {
-        let capturedCallback: WatchCallback | null = null
-        const fakeWatcher = { close: vi.fn() }
-
-        const spy = vi.spyOn(fs, 'watch').mockImplementation(
-            (_p: fs.PathLike, _o: unknown, cb?: WatchCallback) => {
-                if (cb) capturedCallback = cb
-                return fakeWatcher as unknown as fs.FSWatcher & EventEmitter
-            }
-        )
-
-        await Promise.race([startWatch(undefined, true), wait(50)])
-
-        const callsBefore = mockGenerate.mock.calls.length
-
-        capturedCallback?.('change', null)
-        await wait(400)
-
-        expect(mockGenerate).toHaveBeenCalledTimes(callsBefore)
-
-        spy.mockRestore()
-    })
-
-    it('registers a SIGINT handler for clean exit', async () => {
-        const { restore } = mockFsWatch()
-        const onSpy = vi.spyOn(process, 'on')
-
-        await Promise.race([startWatch(undefined, true), wait(50)])
-
-        expect(onSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function))
-
-        onSpy.mockRestore()
-        restore()
-    })
+    expect(onSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function))
+    onSpy.mockRestore()
+  })
 })

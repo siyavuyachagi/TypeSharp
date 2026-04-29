@@ -23,6 +23,7 @@ Added `[Union]` attribute support for enums, generating a `const` object and der
 - **Comma-syntax attribute support** — `[TypeSharp, Union]` single-bracket comma syntax is now supported alongside `[TypeSharp][Union]` and stacked `[Union]\n[TypeSharp]` forms
 - **`[TypeSharp("name"), Union]` support** — Name overrides work correctly with union enums
 - **Union enum tests** — Parser tests covering all attribute orderings and generator tests covering const/type output correctness
+- Added readme logo.
 
 ---
 

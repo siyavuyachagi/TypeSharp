@@ -1,7 +1,7 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
 import { generate, loadConfig } from './index.js';
+import { watchDirectory } from '../helpers/watcher.js';
 const DEBOUNCE_MS = 300;
 const IGNORED_SEGMENTS = [
     'node_modules',
@@ -37,7 +37,7 @@ export async function startWatch(configPath, incremental) {
     console.log(chalk.gray('   Press Ctrl+C to stop\n'));
     let debounceTimer = null;
     let isGenerating = false;
-    const watcher = fs.watch(watchDir, { recursive: true }, (_eventType, filename) => {
+    const watcher = watchDirectory(watchDir, (_eventType, filename) => {
         if (!filename)
             return;
         const absoluteFile = path.resolve(watchDir, filename);
