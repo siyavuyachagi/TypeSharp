@@ -1,7 +1,5 @@
-# TypeSharp
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/siyavuyachagi/typesharp/main/public/images/banner-transparent.png" alt="TypeSharp" height="120" />
+  <img src="https://raw.githubusercontent.com/siyavuyachagi/typesharp/main/public/BannerTransparent.svg" alt="TypeSharp" height="120" />
 </p>
 
 <p align='center'>
