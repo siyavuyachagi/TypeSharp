@@ -1,9 +1,27 @@
 import { CSharpClass } from "../types/index.js";
 
 /**
+ * Generate TypeScript enum
+ */
+export function generateEnum(cls: CSharpClass): string {
+  if (cls.isUnion) {
+      return generateUnionEnum(cls);
+  }
+
+  const values = cls.enumValues || [];
+  const enumValues = values
+      .map(v => `  ${v} = '${v}'`)
+      .join(',\n');
+
+  return `export enum ${cls.name} {\n${enumValues}\n}`;
+}
+
+
+
+/**
  * Generate a const object + union type from a [Union]-decorated enum
  */
-export function generateUnionEnum(cls: CSharpClass): string {
+function generateUnionEnum(cls: CSharpClass): string {
     const values = cls.enumValues || [];
     const entries = values.map(v => `  ${v}: '${v}'`).join(',\n');
     return [

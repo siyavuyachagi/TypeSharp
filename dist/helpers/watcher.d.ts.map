@@ -1,0 +1,1 @@
+{"version":3,"file":"watcher.d.ts","sourceRoot":"","sources":["../../src/helpers/watcher.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,MAAM,IAAI,CAAC;AAEzB,MAAM,MAAM,aAAa,GAAG,CAAC,SAAS,EAAE,MAAM,EAAE,QAAQ,EAAE,MAAM,GAAG,IAAI,KAAK,IAAI,CAAC;AAEjF,wBAAgB,cAAc,CAAC,GAAG,EAAE,MAAM,EAAE,QAAQ,EAAE,aAAa,GAAG,EAAE,CAAC,SAAS,CAEjF"}

@@ -6,6 +6,7 @@ import * as path from 'path'
 import * as os from 'os'
 import { createSampleConfig } from '../../src/core/create-sample-config'
 import { generate } from '../../src/core'
+import { vi, type MockedFunction } from 'vitest'
 
 describe('CLI - Command Line Interface', () => {
     let tmpDir: string
@@ -173,3 +174,4 @@ describe('CLI - Command Line Interface', () => {
         })
     })
 })
+

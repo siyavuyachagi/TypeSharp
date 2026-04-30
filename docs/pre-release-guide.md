@@ -34,7 +34,7 @@ Decide your new version before touching any files. Everything below references i
 Add a new section at the top (below the `## Important note` block), following the existing format:
 
 ```md
-## [X.X.X] - YYYY-MM-DD
+## vX.X.X - YYYY-MM-DD
 
 ### Summary
 One or two sentences describing the release theme.
@@ -205,7 +205,7 @@ Every release touches these version strings.
 | File | Location |
 |---|---|
 | `package.json` | `"version": "X.X.X"` |
-| `CHANGELOG.md` | New `## [X.X.X] - YYYY-MM-DD` section |
+| `CHANGELOG.md` | New `## vX.X.X - YYYY-MM-DD` section |
 | `README.md` | Features, config table, requirements |
 | `docs/usage.md` | Config options, type mappings, CLI usage |
 | `docs/why-typesharp.md` | Roadmap, comparisons |

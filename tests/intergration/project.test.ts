@@ -56,7 +56,7 @@ describe('TypeSharp - Real Project Integration', () => {
             const files = getAllFiles(config.outputPath).filter(f => f.endsWith('.ts'))
             for (const file of files) {
                 const content = fs.readFileSync(file, 'utf-8')
-                expect(content).toMatch(/export (interface|enum)/)
+                expect(content).toMatch(/export (interface|enum|const)/)
             }
         })
 
