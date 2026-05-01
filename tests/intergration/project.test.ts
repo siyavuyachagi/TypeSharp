@@ -1,5 +1,5 @@
 // tests/intergration/real.project.test.ts
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import * as fs from 'fs'
 import * as path from 'path'
 import { parseCSharpFiles } from "../../src/parser/index.ts";
@@ -7,6 +7,7 @@ import { generateTypeScriptFiles } from "../../src/generator/index.ts";
 import config from "../config/typesharp.config.ts";
 
 let generationError: Error | null = null;
+
 describe('TypeSharp - Real Project Integration', () => {
     beforeAll(async () => {
         try {

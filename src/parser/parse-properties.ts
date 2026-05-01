@@ -9,8 +9,8 @@ export function parseProperties(classBody: string): CSharpProperty[] {
 
     let match;
 
-    // Match property declarations with get/set
-    const propertyRegex = /public\s+([\w<>[\]?]+)\s+(\w+)\s*\{\s*get;\s*set;\s*\}/g;
+    // Match property declarations with get/set/init accessors
+    const propertyRegex = /public\s+([\w<>[\]?]+)\s+(\w+)\s*\{\s*(?:get;\s*)?(?:set|init);\s*\}/g;
     while ((match = propertyRegex.exec(classBody)) !== null) {
         const type = match[1]!;
         const name = match[2]!;

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -768,6 +768,136 @@ describe('Parser', () => {
 });
 
 
+describe('init-only properties', () => {
+  it('parses init-only properties as normal properties', async () => {
+    const { csproj } = makeTempProject(`
+      namespace Test {
+        [TypeSharp]
+        public class LoginCommand {
+          public string Email { get; init; } = default!;
+          public string Password { get; init; } = default!;
+          public bool RememberMe { get; init; } = false;
+        }
+      }
+    `);
+
+    const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
+    const cls = results.flatMap(r => r.classes).find(c => c.name === 'LoginCommand');
+    expect(cls).toBeDefined();
+    expect(cls!.properties.find(p => p.name === 'Email')).toBeDefined();
+    expect(cls!.properties.find(p => p.name === 'Password')).toBeDefined();
+    expect(cls!.properties.find(p => p.name === 'RememberMe')).toBeDefined();
+  });
+
+  it('maps init-only property types correctly', async () => {
+    const { csproj } = makeTempProject(`
+      namespace Test {
+        [TypeSharp]
+        public class LoginCommand {
+          public string Email { get; init; } = default!;
+          public string Password { get; init; } = default!;
+          public bool RememberMe { get; init; } = false;
+        }
+      }
+    `);
+
+    const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
+    const cls = results.flatMap(r => r.classes).find(c => c.name === 'LoginCommand');
+    expect(cls!.properties.find(p => p.name === 'Email')?.type).toBe('string');
+    expect(cls!.properties.find(p => p.name === 'Password')?.type).toBe('string');
+    expect(cls!.properties.find(p => p.name === 'RememberMe')?.type).toBe('boolean');
+  });
+
+  it('respects nullability on init-only properties', async () => {
+    const { csproj } = makeTempProject(`
+      namespace Test {
+        [TypeSharp]
+        public class ProfileCommand {
+          public string Username { get; init; } = default!;
+          public string? Bio { get; init; }
+        }
+      }
+    `);
+
+    const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
+    const cls = results.flatMap(r => r.classes).find(c => c.name === 'ProfileCommand');
+    expect(cls!.properties.find(p => p.name === 'Username')?.isNullable).toBe(false);
+    expect(cls!.properties.find(p => p.name === 'Bio')?.isNullable).toBe(true);
+  });
+
+  it('[TypeIgnore] excludes an init-only property', async () => {
+    const { csproj } = makeTempProject(`
+      namespace Test {
+        [TypeSharp]
+        public class LoginCommand {
+          public string Email { get; init; } = default!;
+          [TypeIgnore]
+          public string Password { get; init; } = default!;
+        }
+      }
+    `);
+
+    const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
+    const cls = results.flatMap(r => r.classes).find(c => c.name === 'LoginCommand');
+    expect(cls!.properties.find(p => p.name === 'Password')).toBeUndefined();
+    expect(cls!.properties.find(p => p.name === 'Email')).toBeDefined();
+  });
+
+  it('[TypeAs] overrides type on an init-only property', async () => {
+    const { csproj } = makeTempProject(`
+      namespace Test {
+        [TypeSharp]
+        public class EventCommand {
+          [TypeAs("Date")]
+          public DateTime ScheduledAt { get; init; }
+        }
+      }
+    `);
+
+    const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
+    const cls = results.flatMap(r => r.classes).find(c => c.name === 'EventCommand');
+    expect(cls!.properties.find(p => p.name === 'ScheduledAt')?.type).toBe('Date');
+  });
+
+  it('[Obsolete] marks an init-only property as deprecated', async () => {
+    const { csproj } = makeTempProject(`
+      using System;
+      namespace Test {
+        [TypeSharp]
+        public class LoginCommand {
+          [Obsolete("Use Email instead.")]
+          public string Username { get; init; } = default!;
+          public string Email { get; init; } = default!;
+        }
+      }
+    `);
+
+    const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
+    const cls = results.flatMap(r => r.classes).find(c => c.name === 'LoginCommand');
+    const username = cls!.properties.find(p => p.name === 'Username');
+    expect(username?.isDeprecated).toBe(true);
+    expect(username?.deprecationMessage).toBe('Use Email instead.');
+    expect(cls!.properties.find(p => p.name === 'Email')?.isDeprecated).toBe(false);
+  });
+
+  it('ignores the generic interface base (ICommand<T>) — no inheritsFrom set', async () => {
+    const { csproj } = makeTempProject(`
+      namespace Test {
+        [TypeSharp]
+        public class LoginCommand : ICommand<string> {
+          public string Email { get; init; } = default!;
+        }
+      }
+    `);
+
+    const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
+    const cls = results.flatMap(r => r.classes).find(c => c.name === 'LoginCommand');
+    expect(cls).toBeDefined();
+    expect(cls!.inheritsFrom).toBeUndefined();
+  });
+});
+
+
 describe('[Union] enum support', () => {
   it('sets isUnion: true when [TypeSharp][Union] decorates an enum', async () => {
     const { csproj } = makeTempProject(`
@@ -877,13 +1007,13 @@ describe('[Union] enum support', () => {
         public enum Status { Active, Inactive }
       }
     `);
-  
+
     const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
     const cls = results.flatMap(r => r.classes).find(c => c.name === 'Status');
     expect(cls).toBeDefined();
     expect(cls!.isUnion).toBe(true);
   });
-  
+
   it('sets isUnion: true with [TypeSharp("name"), Union] comma syntax', async () => {
     const { csproj } = makeTempProject(`
       namespace Test {
@@ -891,10 +1021,22 @@ describe('[Union] enum support', () => {
         public enum Status { Active, Inactive }
       }
     `);
-  
+
     const results = await parseCSharpFiles({ source: csproj, outputPath: '/tmp/out' });
     const cls = results.flatMap(r => r.classes).find(c => c.name === 'my_status');
     expect(cls).toBeDefined();
     expect(cls!.isUnion).toBe(true);
   });
+});
+
+
+// Cleanup any leftover temp projects after tests run
+afterAll(() => {
+  const tmpDir = os.tmpdir();
+  const entries = fs.readdirSync(tmpDir);
+  for (const entry of entries) {
+    if (entry.startsWith('ts-parser-')) {
+      fs.rmSync(path.join(tmpDir, entry), { recursive: true, force: true });
+    }
+  }
 });

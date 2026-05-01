@@ -11,11 +11,11 @@ TypeSharp parses C# projects directly, targeting classes and enums decorated wit
 
 ---
 
-## v0.2.1 - YYYY-MM-DD
+## v0.2.1 - 2026-05-01
 
 ### Summary
 
-Added `[Union]` attribute support for enums, generating a `const` object and derived union type instead of a standard TypeScript enum.
+Added `[Union]` attribute support for enums, generating a `const` object and derived union type instead of a standard TypeScript enum. Also fixed `init` accessor support for C# property parsing.
 
 ### Added
 
@@ -24,6 +24,10 @@ Added `[Union]` attribute support for enums, generating a `const` object and der
 - **`[TypeSharp("name"), Union]` support** — Name overrides work correctly with union enums
 - **Union enum tests** — Parser tests covering all attribute orderings and generator tests covering const/type output correctness
 - Added readme logo.
+
+### Fixed
+
+- **`{ get; init; }` property parsing** — Properties using `init` instead of `set` are now correctly parsed. Regex updated to match `get; set;`, `get; init;`, and variations.
 
 ---
 
