@@ -46,4 +46,4 @@ jobs:
       - name: Publish package
         run: npm publish --tag ${{ env.PUBLISH_TAG }} --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.TYPESHARP_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
