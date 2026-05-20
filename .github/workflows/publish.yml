@@ -29,21 +29,21 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           PACKAGE_NAME=$(node -p "require('./package.json').name")
-          
+
           echo "Package: $PACKAGE_NAME"
           echo "Version: $VERSION"
-          
+
           # Determine tag based on version string
           if [[ "$VERSION" == *"-beta"* ]] || [[ "$VERSION" == *"-alpha"* ]] || [[ "$VERSION" == *"-rc"* ]]; then
             PUBLISH_TAG="beta"
           else
             PUBLISH_TAG="latest"
           fi
-          
+
           echo "PUBLISH_TAG=$PUBLISH_TAG" >> $GITHUB_ENV
           echo "Publishing $PACKAGE_NAME@$VERSION with tag: $PUBLISH_TAG"
 
       - name: Publish package
         run: npm publish --tag ${{ env.PUBLISH_TAG }} --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.TYPESHARP_TOKEN }}
