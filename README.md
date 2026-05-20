@@ -16,7 +16,7 @@
 
 Generate TypeScript types from C# models with ease! TypeSharp scans your ASP.NET Core projects and automatically generates TypeScript interfaces from your C# classes and records decorated with the `[TypeSharp]` attribute.
 
-Project structure: [docs/project-structure](docs/project-structure.md)
+Project structure: [docs/FILE_STRUCTURE](docs/FILE_STRUCTURE.md)
 
 ## Features
 
@@ -51,7 +51,7 @@ This is not an OpenApi-based tool !
 | Naming control | ✓ | ! | ! | ✕ |
 | API client generation | ✕ | ✓ | ✕ | ✕ |
 
-Also see [docs/why-typesharp](docs/why-typesharp.md)
+Also see [docs/WHY_TYPESHARP](docs/WHY_TYPESHARP.md)
 
 ## Installation
 
@@ -155,7 +155,7 @@ npx typesharp generate --config ./custom-config.ts
 npx typesharp generate --no-incremental
 ```
 
-For more advanced usage [docs/usage](docs/usage.md)
+For more advanced usage [docs/USAGE](docs/USAGE.md)
 
 ## Configuration
 

@@ -4,12 +4,12 @@
 
 Use [Semantic Versioning](https://semver.org/):
 
-| Change type | Bump | Example |
-|---|---|---|
+| Change type                                                        | Bump  | Example           |
+| ------------------------------------------------------------------ | ----- | ----------------- |
 | Breaking change (removes/renames a config option or output format) | Major | `0.1.1` → `1.0.0` |
-| New feature (backwards-compatible) | Minor | `0.1.1` → `0.2.0` |
-| Bug fix or internal improvement | Patch | `0.1.1` → `0.1.2` |
-| Pre-release / beta | Pre | `0.2.0-beta.1` |
+| New feature (backwards-compatible)                                 | Minor | `0.1.1` → `0.2.0` |
+| Bug fix or internal improvement                                    | Patch | `0.1.1` → `0.1.2` |
+| Pre-release / beta                                                 | Pre   | `0.2.0-beta.1`    |
 
 Decide your new version before touching any files. Everything below references it.
 
@@ -37,18 +37,23 @@ Add a new section at the top (below the `## Important note` block), following th
 ## vX.X.X - YYYY-MM-DD
 
 ### Summary
+
 One or two sentences describing the release theme.
 
 ### Added
+
 - New features
 
 ### Changed
+
 - Changed behaviour or config options
 
 ### Fixed
+
 - Bug fixes
 
-### Removed  ← only if something was removed
+### Removed ← only if something was removed
+
 - Removed features
 ```
 
@@ -94,7 +99,7 @@ Go through the whole README and ask for each section:
 
 ---
 
-### 2.6 `docs/prject-structure.md`
+### 2.6 `docs/project-structure.md`
 
 - [✓] Structure matches the actual `src/` layout (new files or folders added?)
 - [✓] All status indicators (`✅`) are accurate
@@ -112,7 +117,40 @@ Go through the whole README and ask for each section:
 
 ---
 
-## 4. Things Commonly Forgotten
+## 4. Local Testing (Real Project)
+
+Test the built CLI against an actual project before tagging.
+
+```bash
+# In the typesharp repo root
+npm run build
+npm link
+
+# In your test project (consumer)
+npm link @siyavuyachagi/typesharp
+```
+
+Then run through the core commands manually:
+
+```bash
+typesharp --version          # confirms correct version
+typesharp init               # check sample config generates correctly
+typesharp generate           # check types are generated as expected
+typesharp --watch              # make a change to a .cs file, confirm regeneration
+```
+
+- [✓] `--version` prints the correct new version
+- [✓] `init` generates a valid sample config with all current options
+- [✓] `generate` produces correct `.ts` output for the test project's models
+- [✓] `watch` detects file changes and regenerates only affected models
+- [✓] No unexpected errors or regressions in output
+
+```bash
+# Unlink when done
+npm unlink -g @siyavuyachagi/typesharp
+```
+
+## 5. Things Commonly Forgotten
 
 These are easy to miss. Check them explicitly every release:
 
@@ -127,7 +165,7 @@ These are easy to miss. Check them explicitly every release:
 
 ---
 
-## 5. Git
+## 6. Git
 
 ```bash
 # Make sure you're on main and up to date
@@ -154,7 +192,7 @@ git push origin vX.X.X
 
 ---
 
-## 6. GitHub Release
+## 7. GitHub Release
 
 1. Go to [https://github.com/siyavuyachagi/typesharp/releases/new](https://github.com/siyavuyachagi/typesharp/releases/new)
 2. Select the tag you just pushed (`vX.X.X`)
@@ -171,7 +209,7 @@ git push origin vX.X.X
 
 ---
 
-## 7. Verify the npm Publish
+## 8. Verify the npm Publish
 
 After the GitHub Actions workflow completes (usually under 2 minutes):
 
@@ -189,7 +227,7 @@ npm view @siyavuyachagi/typesharp
 
 ---
 
-## 8. Post-Release
+## 9. Post-Release
 
 - [✓] Close any GitHub Issues that were resolved in this release
 - [✓] Reply to any open Issues or PRs that were waiting on this release
@@ -202,11 +240,11 @@ npm view @siyavuyachagi/typesharp
 
 Every release touches these version strings.
 
-| File | Location |
-|---|---|
-| `package.json` | `"version": "X.X.X"` |
-| `CHANGELOG.md` | New `## vX.X.X - YYYY-MM-DD` section |
-| `README.md` | Features, config table, requirements |
-| `docs/usage.md` | Config options, type mappings, CLI usage |
-| `docs/why-typesharp.md` | Roadmap, comparisons |
-| `docs/project-structure.md` | Structure and status indicators |
+| File                        | Location                                 |
+| --------------------------- | ---------------------------------------- |
+| `package.json`              | `"version": "X.X.X"`                     |
+| `CHANGELOG.md`              | New `## vX.X.X - YYYY-MM-DD` section     |
+| `README.md`                 | Features, config table, requirements     |
+| `docs/usage.md`             | Config options, type mappings, CLI usage |
+| `docs/why-typesharp.md`     | Roadmap, comparisons                     |
+| `docs/project-structure.md` | Structure and status indicators          |

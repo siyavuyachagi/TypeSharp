@@ -4,12 +4,13 @@ import { parseCSharpFiles } from '../parser/index.js';
 import { convertFileName, generateTypeScriptFiles } from '../generator/index.js';
 import chalk from 'chalk';
 import { pathToFileURL } from 'url';
+import { logger } from '../helpers/logger.js';
 /**
  * Default configuration values
  */
 const DEFAULT_CONFIG = {
     singleOutputFile: false,
-    namingConvention: 'camel'
+    namingConvention: 'kebab',
 };
 /**
  * Load configuration from a file
@@ -51,12 +52,7 @@ async function loadConfigFromFile(filePath) {
  * Merge user config with defaults
  */
 export const mergeWithDefaults = (config) => {
-    // Deprecation warning
-    if (config.projectFiles && !config.source) {
-        console.warn(chalk.yellow.bold('⚠ Deprecation:'), chalk.white('`projectFiles` is deprecated. Please rename it to `source` in your config.'));
-        config.source = config.source || config.projectFiles;
-    }
-    if (!config.source && !config.projectFiles) {
+    if (!config.source) {
         throw new Error('`source` is required in configuration');
     }
     if (!config.outputPath) {
@@ -69,20 +65,22 @@ export const mergeWithDefaults = (config) => {
 };
 export async function generate(configPath, incremental = true) {
     try {
-        console.log(chalk.cyan.bold('\n🚀 TypeSharp - Starting generation...'));
+        console.log('\n');
+        logger.info('generate', 'TypeSharp - Starting generation...');
         const config = await loadConfig(configPath);
-        console.log(chalk.green.bold('\n✓ Configuration loaded'));
-        console.log(chalk.cyan(`->  Output:`), chalk.white(config.outputPath));
-        console.log(chalk.cyan(`->  Single file:`), chalk.white(config.singleOutputFile));
-        console.log(chalk.cyan(`->  Naming convention:`), chalk.white(config.namingConvention));
-        console.log(chalk.cyan('\n⧖ Parsing C# files...'));
+        logger.success('generate', 'Configuration loaded');
+        logger.debug('generate', `Output     : ${config.outputPath}`);
+        logger.debug('generate', `Single file: ${config.singleOutputFile}`);
+        logger.debug('generate', `Convention : ${config.namingConvention}`);
+        logger.debug('generate', 'Parsing C# files...');
         const parseResults = await parseCSharpFiles(config);
         if (parseResults.length === 0) {
-            console.warn(chalk.yellow.bold('\n❗ Warning:'), chalk.white(`No C# files found with [TypeSharp] attribute\n`));
+            console.log('\n');
+            logger.warn('generate', 'No C# files found with [TypeSharp] attribute');
             return;
         }
         const allClasses = parseResults.flatMap(result => result.classes);
-        console.log(chalk.green.bold(`\n✓ Found ${allClasses.length} ${allClasses.length === 1 ? 'class' : 'classes'} with [TypeSharp] attribute`));
+        logger.success('generate', `Found ${allClasses.length} ${allClasses.length === 1 ? 'class' : 'classes'} with [TypeSharp] attribute`);
         let metrics;
         if (incremental) {
             const changedFiles = await cleanOnlyChangedOutputFiles(config, parseResults);
@@ -92,16 +90,12 @@ export async function generate(configPath, incremental = true) {
             cleanOutputDirectory(config.outputPath);
             metrics = generateTypeScriptFiles(config, parseResults);
         }
-        console.log(chalk.blue(`\nCreated: ${metrics.created} | Updated: ${metrics.updated} | Total files: ${metrics.total}`));
-        console.log(chalk.green.bold('\n✓ Generation completed successfully!'));
+        logger.info('generate', `Created: ${metrics.created} | Updated: ${metrics.updated} | Total: ${metrics.total}`);
+        logger.success('generate', 'Generation completed successfully!');
     }
     catch (error) {
-        if (error instanceof Error) {
-            console.error(chalk.red.bold(`\n❌ Error:`), chalk.white(error.message));
-        }
-        else {
-            console.error(chalk.red.bold(`\n❌ An unknown error occurred`));
-        }
+        console.log('\n');
+        logger.error('generate', error instanceof Error ? error.message : 'An unknown error occurred');
         throw error;
     }
 }
@@ -133,12 +127,9 @@ export function cleanOutputDirectory(dir) {
     if (!fs.existsSync(dir))
         return;
     const entries = fs.readdirSync(dir);
-    console.log(chalk.cyan('\n⧖ Clearing output directory:'));
-    for (const [index, entry] of entries.entries()) {
+    logger.tree(`Clearing output directory: ${dir}`, entries.map(e => path.join(dir, e)));
+    for (const entry of entries) {
         const fullPath = path.join(dir, entry);
-        const isLast = index === entries.length - 1;
-        const tree = chalk.gray(isLast ? '└──' : '├──');
-        console.log(tree, chalk.red('deleted'), chalk.gray(`${chalk.strikethrough(fullPath)}`));
         const stat = fs.lstatSync(fullPath);
         if (stat.isDirectory()) {
             fs.rmSync(fullPath, { recursive: true, force: true });
@@ -153,7 +144,13 @@ export function cleanOutputDirectory(dir) {
  */
 function removeCorrespondingTsFile(config, csharpFilePath) {
     const outputPath = config.outputPath;
-    const relativePath = path.relative(config.source, csharpFilePath);
+    const sources = Array.isArray(config.source) ? config.source : [config.source];
+    const matchingSource = sources.find(s => csharpFilePath.startsWith(path.dirname(s)));
+    if (!matchingSource) {
+        logger.warn('removeCorrespondingTsFile', `Could not resolve source project for deleted file: ${csharpFilePath}`);
+        return;
+    }
+    const relativePath = path.relative(path.dirname(matchingSource), csharpFilePath);
     const fileName = path.basename(relativePath, '.cs');
     const fileConvention = typeof config.namingConvention === 'string'
         ? config.namingConvention

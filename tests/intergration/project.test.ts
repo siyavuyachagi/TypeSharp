@@ -2,15 +2,147 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import * as fs from 'fs'
 import * as path from 'path'
+import * as os from 'os'
 import { parseCSharpFiles } from "../../src/parser/index.ts";
 import { generateTypeScriptFiles } from "../../src/generator/index.ts";
-import config from "../config/typesharp.config.ts";
+import type { TypeSharpConfig } from "../../src/types/index.ts";
 
 let generationError: Error | null = null;
+let testOutputPath: string;
+let testProjectDir: string;
+let config: TypeSharpConfig;
+
+function createTestProject(): { dir: string; csproj: string } {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-integration-'));
+    const csproj = path.join(dir, 'Test.csproj');
+    fs.writeFileSync(csproj, `<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>`);
+
+    // User.cs
+    fs.writeFileSync(path.join(dir, 'User.cs'), `
+using System;
+using System.Collections.Generic;
+
+[TypeSharp]
+public class User
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public DateOnly? DateOfBirth { get; set; }
+    public ICollection<UserRoleCode> Roles { get; set; } = new List<UserRoleCode>();
+    public ICollection<string> Permissions { get; set; } = new List<string>();
+}
+  `);
+
+    // Employee.cs
+    fs.writeFileSync(path.join(dir, 'Employee.cs'), `
+using System;
+
+[TypeSharp]
+public class Employee
+{
+    public int Id { get; set; }
+    public string Department { get; set; } = string.Empty;
+
+    [Obsolete("Use employeeCode instead.")]
+    public string LegacyCode { get; set; } = string.Empty;
+}
+
+[TypeSharp]
+public class Developer : Employee
+{
+    public string PrimaryLanguage { get; set; } = string.Empty;
+}
+  `);
+
+    // UserRoleCode.cs
+    fs.writeFileSync(path.join(dir, 'UserRoleCode.cs'), `
+[TypeSharp]
+public enum UserRoleCode
+{
+    Admin,
+    User,
+    Guest
+}
+  `);
+
+    // Gender.cs
+    fs.writeFileSync(path.join(dir, 'Gender.cs'), `
+using System;
+
+[TypeSharp, Union]
+public enum Gender
+{
+    Male,
+    Female,
+    NonBinary,
+    Other
+}
+  `);
+
+    // ApiResponse.cs
+    fs.writeFileSync(path.join(dir, 'ApiResponse.cs'), `
+[TypeSharp]
+public class ApiResponse<T>
+{
+    public bool Success { get; set; }
+    public string? Message { get; set; }
+    public T Data { get; set; } = default!;
+    public List<string> Errors { get; set; } = new List<string>();
+}
+  `);
+
+    // Department.cs
+    fs.writeFileSync(path.join(dir, 'Department.cs'), `
+using System;
+
+[TypeSharp]
+public class Department
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+  `);
+
+    // LegalInformationCreateDto.cs
+    fs.writeFileSync(path.join(dir, 'LegalInformationCreateDto.cs'), `
+[TypeSharp]
+public class LegalInformationCreateDto
+{
+    public string? RegistrationNumber { get; set; }
+    public string? VatNumber { get; set; }
+}
+  `);
+
+    // OrganizationLegalInformationCreateDto.cs
+    fs.writeFileSync(path.join(dir, 'OrganizationLegalInformationCreateDto.cs'), `
+using Microsoft.AspNetCore.Http;
+
+[TypeSharp]
+public class OrganizationLegalInformationCreateDto : LegalInformationCreateDto
+{
+    public IFormFile ConstitutionDocument { get; set; } = default!;
+    public IFormFile ProofOfRegistrationDocument { get; set; } = default!;
+}
+  `);
+
+    return { dir, csproj };
+}
 
 describe('TypeSharp - Real Project Integration', () => {
     beforeAll(async () => {
         try {
+            const { dir, csproj } = createTestProject();
+            testProjectDir = dir;
+            testOutputPath = path.join(dir, '.generated');
+
+            config = {
+                source: [csproj],
+                outputPath: testOutputPath,
+                singleOutputFile: false,
+                namingConvention: 'snake',
+            };
+
             if (fs.existsSync(config.outputPath)) {
                 fs.rmSync(config.outputPath, { recursive: true, force: true });
             }
@@ -23,6 +155,12 @@ describe('TypeSharp - Real Project Integration', () => {
             generateTypeScriptFiles(config, results);
         } catch (error) {
             generationError = error instanceof Error ? error : new Error(String(error));
+        }
+    });
+
+    afterAll(() => {
+        if (testProjectDir && fs.existsSync(testProjectDir)) {
+            fs.rmSync(testProjectDir, { recursive: true, force: true });
         }
     });
 

@@ -4,7 +4,7 @@ import { glob } from 'glob';
 import { ParseResult } from '../types/index.js';
 import { TypeSharpConfig } from '../types/typesharp-config.js';
 import { parseClassesFromFile } from './parse-classes-from-file.js';
-import chalk from 'chalk';
+import { logger } from '../helpers/logger.js';
 
 
 
@@ -14,37 +14,37 @@ import chalk from 'chalk';
  * Parse C# files in the target project(s)
  */
 export async function parseCSharpFiles(config: TypeSharpConfig): Promise<ParseResult[]> {
-  // Hardcoded to TypeSharp only
-  const targetAnnotation = 'TypeSharp';
+    // Hardcoded to TypeSharp only
+    const targetAnnotation = 'TypeSharp';
 
-  // Convert single project to array for unified handling
-  const projectFiles = resolveProjectFilesFromSource(config.source!);
+    // Convert single project to array for unified handling
+    const projectFiles = resolveProjectFilesFromSource(config.source!);
 
-  const allResults: ParseResult[] = [];
+    const allResults: ParseResult[] = [];
 
-  // Process each project
-  for (const projectFile of projectFiles) {
-    const projectDir = path.dirname(projectFile);
+    // Process each project
+    for (const projectFile of projectFiles) {
+        const projectDir = path.dirname(projectFile);
 
-    const csFiles = await glob('**/*.cs', {
-      cwd: projectDir,
-      absolute: true,
-      ignore: ['**/bin/**', '**/obj/**', '**/node_modules/**']
-    });
+        const csFiles = await glob('**/*.cs', {
+            cwd: projectDir,
+            absolute: true,
+            ignore: ['**/bin/**', '**/obj/**', '**/node_modules/**']
+        });
 
-    for (const filePath of csFiles) {
-      const content = fs.readFileSync(filePath, 'utf-8');
-      const classes = parseClassesFromFile(content, targetAnnotation);
+        for (const filePath of csFiles) {
+            const content = fs.readFileSync(filePath, 'utf-8');
+            const classes = parseClassesFromFile(content, targetAnnotation);
 
-      if (classes.length > 0) {
-        // Store relative path for preserving folder structure later
-        const relativePath = path.relative(projectDir, filePath);
-        allResults.push({ classes, filePath, relativePath });
-      }
+            if (classes.length > 0) {
+                // Store relative path for preserving folder structure later
+                const relativePath = path.relative(projectDir, filePath);
+                allResults.push({ classes, filePath, relativePath });
+            }
+        }
     }
-  }
 
-  return allResults;
+    return allResults;
 }
 
 
@@ -109,8 +109,6 @@ export function resolveProjectFilesFromSource(source: string | string[]): string
         }
     }
 
-    console.log(' csproj files [');
-    csprojFiles.forEach(file => console.log(chalk.green(`  '${file}'`)));
-    console.log(' ]');
+    logger.tree('Resolved .csproj files', csprojFiles, 'info');
     return csprojFiles;
 }

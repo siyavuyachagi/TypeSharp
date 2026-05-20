@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
 import { parseClassesFromFile } from './parse-classes-from-file.js';
-import chalk from 'chalk';
+import { logger } from '../helpers/logger.js';
 /**
  * Parse C# files in the target project(s)
  */
@@ -88,9 +88,7 @@ export function resolveProjectFilesFromSource(source) {
             throw new Error(`Unsupported source file type: "${path.basename(s)}". Expected .csproj, .sln, or .slnx`);
         }
     }
-    console.log(' csproj files [');
-    csprojFiles.forEach(file => console.log(chalk.green(`  '${file}'`)));
-    console.log(' ]');
+    logger.tree('Resolved .csproj files', csprojFiles, 'info');
     return csprojFiles;
 }
 //# sourceMappingURL=index.js.map

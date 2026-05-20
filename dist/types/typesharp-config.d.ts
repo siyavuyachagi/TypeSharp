@@ -17,11 +17,6 @@ export interface TypeSharpConfig {
      */
     source: string | string[];
     /**
-     * @deprecated Use `source` instead. Will be removed in a future version.
-     * @see source
-     */
-    projectFiles?: string | string[];
-    /**
      * Path where TypeScript files will be generated
      */
     outputPath: string;

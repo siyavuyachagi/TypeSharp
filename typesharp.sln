@@ -2,32 +2,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fixtures", "fixtures", "{F12727AA-ABEF-07AF-E6F0-CD96E3D9A8AF}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csharp", "csharp", "{C652F043-E383-5087-9649-80C5D5761437}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TypeSharpTest", "tests\fixtures\csharp\TypeSharpTest.csproj", "{ECBCE6F8-63D6-E14F-6CD5-5AB2446EA33A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{ECBCE6F8-63D6-E14F-6CD5-5AB2446EA33A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ECBCE6F8-63D6-E14F-6CD5-5AB2446EA33A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ECBCE6F8-63D6-E14F-6CD5-5AB2446EA33A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ECBCE6F8-63D6-E14F-6CD5-5AB2446EA33A}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{F12727AA-ABEF-07AF-E6F0-CD96E3D9A8AF} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{C652F043-E383-5087-9649-80C5D5761437} = {F12727AA-ABEF-07AF-E6F0-CD96E3D9A8AF}
-		{ECBCE6F8-63D6-E14F-6CD5-5AB2446EA33A} = {C652F043-E383-5087-9649-80C5D5761437}
+EndGlobal
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B7626D41-208B-45EE-AFFB-82C0AA6457E5}

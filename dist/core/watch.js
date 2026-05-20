@@ -1,7 +1,7 @@
 import * as path from 'path';
-import chalk from 'chalk';
 import { generate, loadConfig } from './index.js';
 import { watchDirectory } from '../helpers/watcher.js';
+import { logger } from '../helpers/logger.js';
 const DEBOUNCE_MS = 300;
 const IGNORED_SEGMENTS = [
     'node_modules',
@@ -24,17 +24,17 @@ const IGNORED_SEGMENTS = [
  * Linux support requires Node >= 22.
  */
 export async function startWatch(configPath, incremental) {
-    console.log(chalk.cyan.bold('\n🚀 TypeSharp - Starting watch mode...'));
+    logger.info('startWatch', 'TypeSharp - Starting watch mode...');
     // Initial generation — full or incremental depending on the flag
     await generate(configPath, incremental);
     // Load config so we can exclude the output directory from watch events
     const config = await loadConfig(configPath);
     const outputPath = path.resolve(config.outputPath);
     const watchDir = process.cwd();
-    console.log(chalk.cyan('\n👁  Watching for changes...'));
-    console.log(chalk.gray(`   Directory : ${watchDir}`));
-    console.log(chalk.gray(`   Debounce  : ${DEBOUNCE_MS}ms`));
-    console.log(chalk.gray('   Press Ctrl+C to stop\n'));
+    logger.info('startWatch', 'Watching for changes...');
+    logger.info('startWatch', `Directory : ${watchDir}`);
+    logger.info('startWatch', `Debounce  : ${DEBOUNCE_MS}ms`);
+    logger.info('startWatch', 'Press Ctrl+C to stop\n');
     let debounceTimer = null;
     let isGenerating = false;
     const watcher = watchDirectory(watchDir, (_eventType, filename) => {
@@ -56,7 +56,7 @@ export async function startWatch(configPath, incremental) {
             if (isGenerating)
                 return;
             isGenerating = true;
-            console.log(chalk.gray(`\n⧖ Change detected: ${filename}`));
+            logger.info('startWatch', `Change detected: ${filename}`);
             try {
                 // Always incremental after the initial run —
                 // hashing determines which C# files actually changed
@@ -72,7 +72,7 @@ export async function startWatch(configPath, incremental) {
     });
     // Graceful shutdown on Ctrl+C
     process.on('SIGINT', () => {
-        console.log(chalk.yellow('\n\n👋 TypeSharp watch stopped.'));
+        logger.info('startWatch', 'TypeSharp watch stopped.');
         watcher.close();
         process.exit(0);
     });

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import chalk from 'chalk';
 import { generateEnum } from './generate-enum.js';
+import { logger } from '../helpers/logger.js';
 /**
  * Generate TypeScript files from parsed C# classes
  */
@@ -32,8 +32,7 @@ function generateSingleFile(classes, outputPath) {
     const filePath = path.join(outputPath, fileName);
     const isNewFile = !fs.existsSync(filePath);
     fs.writeFileSync(filePath, fullContent, 'utf-8');
-    const status = isNewFile ? chalk.cyan('Created') : chalk.green('Updated');
-    console.log(chalk.blue(` ↳`), status + ':', chalk.blue(filePath));
+    logger[isNewFile ? 'info' : 'success']('generateSingleFile', `${isNewFile ? 'Created' : 'Updated'}: ${filePath}`);
     return {
         created: isNewFile ? 1 : 0,
         updated: !isNewFile ? 1 : 0,
@@ -53,7 +52,7 @@ function generateMultipleFiles(outputPath, config, parseResults, changedFiles) {
     let updatedCount = 0;
     const total = parseResultsSorted.length;
     let fileIndex = 0;
-    console.log(chalk.cyan('\n⧖ Generating TypeScript files...'));
+    logger.debug('generateMultipleFiles', 'Generating TypeScript files...');
     for (const result of parseResultsSorted) {
         // Skip if this C# file hasn't changed
         if (changedFiles && !changedFiles.has(result.filePath)) {
@@ -88,17 +87,6 @@ function generateMultipleFiles(outputPath, config, parseResults, changedFiles) {
         // Only write if content changed or file is new
         if (isNewFile || shouldWriteFile(filePath, fullContent)) {
             fs.writeFileSync(filePath, fullContent, 'utf-8');
-            fileIndex++;
-            const isLast = fileIndex === total;
-            const tree = chalk.gray(isLast ? '└──' : '├──');
-            if (isNewFile) {
-                createdCount++;
-                console.log(tree, chalk.cyan('created'), chalk.blue(filePath));
-            }
-            else {
-                updatedCount++;
-                console.log(tree, chalk.yellow('updated'), chalk.blue(filePath));
-            }
         }
     }
     // Return metrics to be logged at the end

@@ -11,6 +11,27 @@ TypeSharp parses C# projects directly, targeting classes and enums decorated wit
 
 ---
 
+## v0.2.2 - 2026-05-20
+
+### Summary
+
+- Improved error visibility with a dedicated logger and resolved a type mismatch bug in the mailer.
+
+### Added
+
+- Logger (New logger to make error tracking more easily)
+
+### Fixed
+
+- The "from" argument must be of type string. Received an instance of Array
+
+
+### Removed
+
+- C# self-contained test project
+
+---
+
 ## v0.2.1 - 2026-05-01
 
 ### Summary

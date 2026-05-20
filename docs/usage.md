@@ -70,13 +70,13 @@ This creates `typesharp.config.ts` in your project root.
 Edit `typesharp.config.ts`:
 
 ```typescript
-import type { TypeSharpConfig } from "@siyavuyachagi/typesharp";
+import type { TypeSharpConfig } from '@siyavuyachagi/typesharp';
 
 const config: TypeSharpConfig = {
-  source: ["C:/Users/User/Desktop/MyApp/MyApp.sln"],
-  outputPath: "./src/types",
+  source: ['C:/Users/User/Desktop/MyApp/MyApp.sln'],
+  outputPath: './src/types',
   singleOutputFile: false,
-  namingConvention: "camel",
+  namingConvention: 'camel',
 };
 
 export default config;
@@ -99,14 +99,13 @@ typesharp generate
 
 ### Configuration Options
 
-| Option             | Type                                      | Default      | Description                                                   |
-| ------------------ | ----------------------------------------- | ------------ | ------------------------------------------------------------- |
-| `source`           | `string \| string[]`                      | _required_   | Path(s) to `.csproj`, `.sln`, or `.slnx` file(s)              |
-| `outputPath`       | `string`                                  | _required_   | Where to generate TypeScript files                            |
-| `singleOutputFile` | `boolean`                                 | `false`      | Generate one file or multiple files                           |
-| `namingConvention` | `string \| { dir: string, file: string }` | `'camel'`    | Property/file/dir naming: `kebab`, `camel`, `pascal`, `snake` |
-| `fileSuffix`       | `string`                                  | _optional_   | Suffix appended to generated file names: `user-dto.ts`        |
-| `projectFiles`     | `string \| string[]`                      | _deprecated_ | ⚠️ Deprecated — use `source` instead                          |
+| Option             | Type                                      | Default    | Description                                                   |
+| ------------------ | ----------------------------------------- | ---------- | ------------------------------------------------------------- |
+| `source`           | `string \| string[]`                      | _required_ | Path(s) to `.csproj`, `.sln`, or `.slnx` file(s)              |
+| `outputPath`       | `string`                                  | _required_ | Where to generate TypeScript files                            |
+| `singleOutputFile` | `boolean`                                 | `false`    | Generate one file or multiple files                           |
+| `namingConvention` | `string \| { dir: string, file: string }` | `'camel'`  | Property/file/dir naming: `kebab`, `camel`, `pascal`, `snake` |
+| `fileSuffix`       | `string`                                  | _optional_ | Suffix appended to generated file names: `user-dto.ts`        |
 
 #### `source`
 
@@ -166,13 +165,13 @@ Available values: `"camel"` | `"kebab"` | `"pascal"` | `"snake"`
 #### TypeScript — `typesharp.config.ts` (Recommended)
 
 ```typescript
-import type { TypeSharpConfig } from "@siyavuyachagi/typesharp";
+import type { TypeSharpConfig } from '@siyavuyachagi/typesharp';
 
 const config: TypeSharpConfig = {
-  source: ["C:/Users/User/Desktop/MyApp/MyApp.sln"],
-  outputPath: "./src/types",
+  source: ['C:/Users/User/Desktop/MyApp/MyApp.sln'],
+  outputPath: './src/types',
   singleOutputFile: false,
-  namingConvention: "camel",
+  namingConvention: 'camel',
 };
 
 export default config;
@@ -182,10 +181,10 @@ export default config;
 
 ```javascript
 module.exports = {
-  source: ["C:/Users/User/Desktop/MyApp/MyApp.sln"],
-  outputPath: "./src/types",
+  source: ['C:/Users/User/Desktop/MyApp/MyApp.sln'],
+  outputPath: './src/types',
   singleOutputFile: false,
-  namingConvention: "camel",
+  namingConvention: 'camel',
 };
 ```
 
@@ -248,8 +247,8 @@ typesharp init --format js
 #### Help & Version
 
 ```bash
-npx typesharp --help
-npx typesharp --version
+npx typesharp --help / -h
+npx typesharp --version / -V
 ```
 
 ## C# Attribute Setup
@@ -285,6 +284,67 @@ public enum OrderStatus
     Delivered,
     Cancelled
 }
+```
+
+```typescript
+export enum OrderStatus {
+  Pending = 'Pending',
+  Processing = 'Processing',
+  Shipped = 'Shipped',
+  Delivered = 'Delivered',
+  Cancelled = 'Cancelled',
+}
+```
+
+### Union Enums with `[Union]`
+
+For stricter type safety and discriminated unions, use `[Union]` alongside `[TypeSharp]` on enums. This generates a const object with `as const` and a derived union type instead of a standard enum:
+
+```csharp
+[TypeSharp]
+[Union]
+public enum OrderStatus
+{
+    Pending,
+    Processing,
+    Shipped,
+    Delivered,
+    Cancelled
+}
+```
+
+```typescript
+export const OrderStatus = {
+  Pending: 'Pending',
+  Processing: 'Processing',
+  Shipped: 'Shipped',
+  Delivered: 'Delivered',
+  Cancelled: 'Cancelled',
+} as const;
+
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
+```
+
+The `[Union]` and `[TypeSharp]` attributes can be combined in multiple ways:
+
+```csharp
+// Stacked attributes
+[TypeSharp]
+[Union]
+public enum Status { ... }
+
+// Reverse order
+[Union]
+[TypeSharp]
+public enum Status { ... }
+
+// Single bracket with comma
+[TypeSharp, Union]
+public enum Status { ... }
+
+// With name override
+[TypeSharp("status_type"), Union]
+public enum Status { ... }
 ```
 
 ### Custom Type Name Override
@@ -386,6 +446,22 @@ export interface User {
   dateOfBirth: string | null;
 }
 ```
+
+### Enum Generation Modes
+
+TypeSharp supports two ways to generate TypeScript from C# enums:
+
+| Feature              | Standard `[TypeSharp]`                          | With `[Union]`                                              |
+| -------------------- | ----------------------------------------------- | ----------------------------------------------------------- |
+| C# Syntax            | `[TypeSharp] public enum Status { ... }`        | `[TypeSharp][Union] public enum Status { ... }`             |
+| TypeScript Output    | `export enum Status { Active = 'Active', ... }` | `export const Status = { Active: 'Active', ... } as const;` |
+| TypeScript Type      | enum type                                       | `type Status = 'Active' \| 'Inactive'` (union)              |
+| Value Access         | `Status.Active`                                 | `Status.Active`                                             |
+| Type Guard           | Manual checking                                 | Can use `Object.values(Status)`                             |
+| Discriminated Unions | Less ideal                                      | Ideal                                                       |
+| Tree-shakeable       | Depends on bundler                              | ✅ Yes                                                      |
+
+Use **`[Union]`** when you need stricter type safety or discriminated union patterns. Use standard **`[TypeSharp]`** for simple enum value grouping.
 
 ## Records
 
@@ -653,6 +729,65 @@ export interface PagedApiResponse<T> extends ApiResponse<T> {
 
 ## Advanced Usage
 
+### Union Enums (const + type)
+
+When you want stricter type safety and better discriminated union support, use `[Union]` to generate a const object with a union type instead of a standard TypeScript enum:
+
+**Why use union enums?**
+
+- **Type-safe object keys**: Access values via the const object (e.g., `OrderStatus.Pending`)
+- **Better union types**: The resulting type is a literal union, not an enum type
+- **Discriminated unions**: Pairs well with discriminated union patterns in TypeScript
+- **Tree-shakeable**: Const objects are easier for bundlers to tree-shake than enums
+
+**Example:**
+
+```csharp
+[TypeSharp]
+[Union]
+public enum OrderStatus
+{
+    Pending,
+    Processing,
+    Shipped,
+    Delivered,
+    Cancelled
+}
+```
+
+Generates:
+
+```typescript
+export const OrderStatus = {
+  Pending: 'Pending',
+  Processing: 'Processing',
+  Shipped: 'Shipped',
+  Delivered: 'Delivered',
+  Cancelled: 'Cancelled',
+} as const;
+
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
+```
+
+Usage in TypeScript:
+
+```typescript
+// Use as const object for values
+function updateOrder(status: OrderStatus): void {
+  const nextStatus = OrderStatus.Shipped; // ✅ type-safe
+}
+
+// Use in union type constraints
+type OrderAction =
+  | { type: 'confirm'; status: OrderStatus; timestamp: string }
+  | { type: 'cancel'; reason: string };
+
+// Type guard
+function isValidStatus(value: string): value is OrderStatus {
+  return Object.values(OrderStatus).includes(value as OrderStatus);
+}
+```
+
 ### Inheritance
 
 TypeSharp preserves class and record inheritance using `extends`:
@@ -806,24 +941,21 @@ All types are written to `src/types/types.ts`.
 ### Programmatic Usage
 
 ```typescript
-import { generate } from "@siyavuyachagi/typesharp";
+import { generate } from '@siyavuyachagi/typesharp';
 
 await generate(); // uses default config
-await generate("./custom-config.json"); // custom config path
+await generate('./custom-config.json'); // custom config path
 ```
 
 ### Advanced Programmatic Usage
 
 ```typescript
-import {
-  parseCSharpFiles,
-  generateTypeScriptFiles,
-} from "@siyavuyachagi/typesharp";
-import type { TypeSharpConfig } from "@siyavuyachagi/typesharp";
+import { parseCSharpFiles, generateTypeScriptFiles } from '@siyavuyachagi/typesharp';
+import type { TypeSharpConfig } from '@siyavuyachagi/typesharp';
 
 const config: TypeSharpConfig = {
-  source: ["C:/Users/User/Desktop/MyApp/Api/Api.csproj"],
-  outputPath: "./src/types",
+  source: ['C:/Users/User/Desktop/MyApp/Api/Api.csproj'],
+  outputPath: './src/types',
 };
 
 const parseResults = await parseCSharpFiles(config);
@@ -837,13 +969,13 @@ generateTypeScriptFiles(config, parseResults);
 **`typesharp.config.ts`:**
 
 ```typescript
-import type { TypeSharpConfig } from "@siyavuyachagi/typesharp";
+import type { TypeSharpConfig } from '@siyavuyachagi/typesharp';
 
 const config: TypeSharpConfig = {
-  source: "../MyApp/MyApp.sln",
-  outputPath: "./src/types",
+  source: '../MyApp/MyApp.sln',
+  outputPath: './src/types',
   singleOutputFile: false,
-  namingConvention: "camel",
+  namingConvention: 'camel',
 };
 
 export default config;
@@ -866,9 +998,9 @@ export default config;
 
 ```vue
 <script setup lang="ts">
-import type { User } from "~/types/user";
-import type { ApiResponse } from "~/types/apiResponse";
-import type { ProductSummary } from "~/types/productSummary";
+import type { User } from '~/types/user';
+import type { ApiResponse } from '~/types/apiResponse';
+import type { ProductSummary } from '~/types/productSummary';
 
 const fetchUser = async (id: number) => {
   const response = await $fetch<ApiResponse<User>>(`/api/users/${id}`);
@@ -931,6 +1063,15 @@ Ensure all types referenced by a decorated class or record are also decorated wi
 
 This should not happen as of `v0.1.2`. TypeSharp automatically strips any base type matching the C# interface naming convention (`I` + uppercase letter) for both classes and records.
 
+### Union enum not generating correctly
+
+Ensure:
+
+- You have both `[TypeSharp]` AND `[Union]` attributes on the enum
+- The attributes appear directly before the `enum` keyword (they can be stacked, on one line with comma, or in any order)
+- The enum has values defined: `public enum Status { Active, Inactive }`
+- Without `[Union]`, a standard TypeScript `enum` is generated instead
+
 ### Getting Help
 
 1. Check this documentation
@@ -951,6 +1092,23 @@ This should not happen as of `v0.1.2`. TypeSharp automatically strips any base t
     "build": "nuxt build"
   }
 }
+```
+
+### Use Union Enums for State/Status Types
+
+For enums that represent application state, status values, or are used in discriminated unions, use `[Union]` to get better type safety and tree-shaking:
+
+```csharp
+[TypeSharp]
+[Union]
+public enum UserRole { Admin, User, Guest }
+
+[TypeSharp]
+[Union]
+public enum OrderStatus { Pending, Shipped, Delivered, Cancelled }
+
+[TypeSharp]
+public enum Priority { Low, Medium, High }  // Simple value grouping → standard enum
 ```
 
 ### Commit Generated Types
@@ -985,9 +1143,8 @@ public record PagedResult<T>(IEnumerable<T> Items, int TotalCount);
 ```
 
 ```typescript
-const userResponse = await $fetch<ApiResponse<User>>("/api/users/1");
-const productsResponse =
-  await $fetch<PagedResult<ProductSummary>>("/api/products");
+const userResponse = await $fetch<ApiResponse<User>>('/api/users/1');
+const productsResponse = await $fetch<PagedResult<ProductSummary>>('/api/products');
 ```
 
 ---
