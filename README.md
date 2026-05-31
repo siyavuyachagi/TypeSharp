@@ -554,13 +554,13 @@ const config: TypeSharpConfig = {
 
 ### Primitives & Common Types
 
-| C# Type                                             | TypeScript Type |
-| --------------------------------------------------- | --------------- |
-| `bool`                                              | `boolean`       |
-| `byte`, `decimal`, `double`, `float`, `int`, `long` | `number`        |
-| `DateTime`, `DateOnly`, `TimeOnly`                  | `string`        |
-| `Guid`, `string`                                    | `string`        |
-| `object`                                            | `any`           |
+| C# Type                                                         | TypeScript Type |
+| --------------------------------------------------------------- | --------------- |
+| `bool`                                                          | `boolean`       |
+| `byte`, `decimal`, `double`, `float`, `int`, `long`, `TimeSpan` | `number`        |
+| `DateTime`, `DateOnly`, `TimeOnly`                              | `string`        |
+| `Guid`, `string`                                                | `string`        |
+| `object`                                                        | `any`           |
 
 ### Collections
 

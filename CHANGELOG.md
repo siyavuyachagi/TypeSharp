@@ -27,8 +27,6 @@ Improved generation accuracy, richer terminal output, and two new type mapping f
 - **Terminal output** — logs are now column-aligned (level, location, message) with divider lines separating tree blocks for improved readability
 - **Generation counters** — `Created`, `Updated`, and `Total` metrics now correctly reflect files written during incremental and full generation runs
 
-### Removed
-
 ---
 
 ## v0.2.2 - 2026-05-20
