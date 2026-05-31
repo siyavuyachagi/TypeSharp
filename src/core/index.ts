@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parseCSharpFiles } from '../parser/index.js';
 import { convertFileName, generateTypeScriptFiles } from '../generator/index.js';
-import chalk from 'chalk';
 import { TypeSharpConfig } from '../types/typesharp-config.js';
 import { pathToFileURL } from 'url';
 import { ParseResult } from '../types/index.js';
@@ -112,7 +111,8 @@ export async function generate(configPath?: string, incremental: boolean = true)
     logger.info('generate', `Created: ${metrics.created} | Updated: ${metrics.updated} | Total: ${metrics.total}`);
     logger.success('generate', 'Generation completed successfully!\n');
   } catch (error) {
-    logger.error('generate', error instanceof Error ? error.message : 'An unknown error occurred\n');
+    logger.error('generate', error instanceof Error ? error.message : 'An unknown error occurred');
+    console.log('')
     throw error;
   }
 }

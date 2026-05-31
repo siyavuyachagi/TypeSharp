@@ -44,12 +44,12 @@ export const createSampleConfig = (format: 'ts' | 'js' | 'json'): void => {
     const existingConfig = allConfigFiles.find(f => fs.existsSync(f));
     if (existingConfig) {
         console.log('')
-        logger.warn('createSampleConfig', `${existingConfig} already exists\n`)
+        logger.warn('createSampleConfig', `${chalk.blue(`./${existingConfig}`)} already exists\n`)
         return;
     }
-
     fs.writeFileSync(fileName, content, 'utf-8');
-    console.log(chalk.gray('└── ') + chalk.blue(`./${fileName}`));
+    console.log('')
+    logger.success('createSampleConfig', chalk.blue(`./${fileName}\n`))
 }
 
 

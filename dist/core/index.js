@@ -90,7 +90,8 @@ export async function generate(configPath, incremental = true) {
         logger.success('generate', 'Generation completed successfully!\n');
     }
     catch (error) {
-        logger.error('generate', error instanceof Error ? error.message : 'An unknown error occurred\n');
+        logger.error('generate', error instanceof Error ? error.message : 'An unknown error occurred');
+        console.log('');
         throw error;
     }
 }
