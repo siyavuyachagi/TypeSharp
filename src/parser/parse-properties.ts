@@ -7,6 +7,18 @@ import { CSharpProperty } from "../types/index.js";
 export function parseProperties(classBody: string): CSharpProperty[] {
     const properties: CSharpProperty[] = [];
 
+    // Build a region map: characterIndex -> regionName
+    const regionMap = buildRegionMap(classBody);
+
+    const getRegion = (index: number): string | undefined => {
+        let active: string | undefined;
+        for (const [start, name] of regionMap) {
+            if (start <= index) active = name;
+            else break;
+        }
+        return active;
+    };
+
     let match;
 
     // Match property declarations with get/set/init accessors
@@ -14,15 +26,12 @@ export function parseProperties(classBody: string): CSharpProperty[] {
     while ((match = propertyRegex.exec(classBody)) !== null) {
         const type = match[1]!;
         const name = match[2]!;
-
         const tsAttrs = extractTypeSharpAttributeInfo(classBody, match.index!);
         if (tsAttrs.ignore) continue;
-
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
-
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!) });
     }
 
     // Also match computed/expression-bodied properties (with =>)
@@ -30,15 +39,12 @@ export function parseProperties(classBody: string): CSharpProperty[] {
     while ((match = computedPropertyRegex.exec(classBody)) !== null) {
         const type = match[1]!;
         const name = match[2]!;
-
         const tsAttrs = extractTypeSharpAttributeInfo(classBody, match.index!);
         if (tsAttrs.ignore) continue;
-
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
-
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!) });
     }
 
     // { get { return ...; } }
@@ -46,18 +52,35 @@ export function parseProperties(classBody: string): CSharpProperty[] {
     while ((match = getBlockRegex.exec(classBody)) !== null) {
         const type = match[1]!;
         const name = match[2]!;
-
         const tsAttrs = extractTypeSharpAttributeInfo(classBody, match.index!);
         if (tsAttrs.ignore) continue;
-
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
-
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!) });
     }
 
     return properties;
+}
+
+
+
+/**
+ * Build a sorted map of character index -> region name from #region / #endregion blocks.
+ * Index points to where that region becomes active (or undefined after #endregion).
+ */
+function buildRegionMap(classBody: string): Map<number, string | undefined> {
+    const map = new Map<number, string | undefined>();
+    const regionRegex = /#region\s+(.+)|#endregion/g;
+    let match;
+    while ((match = regionRegex.exec(classBody)) !== null) {
+        if (match[0].startsWith('#region')) {
+            map.set(match.index, match[1]!.trim());
+        } else {
+            map.set(match.index, undefined);
+        }
+    }
+    return new Map([...map.entries()].sort((a, b) => a[0] - b[0]));
 }
 
 
@@ -257,10 +280,8 @@ function extractObsoleteInfo(classBody: string, matchIndex: number): { isDepreca
             }
             continue;
         }
-
         break;
     }
-
     return { isDeprecated: false };
 }
 
@@ -421,6 +442,7 @@ function mapCSharpTypeToTypeScript(csType: string): string {
         'string': 'string',
         'Stream': 'Blob',
         'TimeOnly': 'string',
+        'TimeSpan': 'number',
     };
 
     return typeMap[csType] || csType;

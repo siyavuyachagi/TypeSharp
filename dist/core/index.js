@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parseCSharpFiles } from '../parser/index.js';
 import { convertFileName, generateTypeScriptFiles } from '../generator/index.js';
-import chalk from 'chalk';
 import { pathToFileURL } from 'url';
 import { logger } from '../helpers/logger.js';
 /**
@@ -69,10 +68,7 @@ export async function generate(configPath, incremental = true) {
         logger.info('generate', 'TypeSharp - Starting generation...');
         const config = await loadConfig(configPath);
         logger.success('generate', 'Configuration loaded');
-        logger.debug('generate', `Output     : ${config.outputPath}`);
-        logger.debug('generate', `Single file: ${config.singleOutputFile}`);
-        logger.debug('generate', `Convention : ${config.namingConvention}`);
-        logger.debug('generate', 'Parsing C# files...');
+        logger.info('generate', 'Parsing C# files...');
         const parseResults = await parseCSharpFiles(config);
         if (parseResults.length === 0) {
             console.log('\n');
@@ -91,11 +87,10 @@ export async function generate(configPath, incremental = true) {
             metrics = generateTypeScriptFiles(config, parseResults);
         }
         logger.info('generate', `Created: ${metrics.created} | Updated: ${metrics.updated} | Total: ${metrics.total}`);
-        logger.success('generate', 'Generation completed successfully!');
+        logger.success('generate', 'Generation completed successfully!\n');
     }
     catch (error) {
-        console.log('\n');
-        logger.error('generate', error instanceof Error ? error.message : 'An unknown error occurred');
+        logger.error('generate', error instanceof Error ? error.message : 'An unknown error occurred\n');
         throw error;
     }
 }
@@ -147,7 +142,7 @@ function removeCorrespondingTsFile(config, csharpFilePath) {
     const sources = Array.isArray(config.source) ? config.source : [config.source];
     const matchingSource = sources.find(s => csharpFilePath.startsWith(path.dirname(s)));
     if (!matchingSource) {
-        logger.warn('removeCorrespondingTsFile', `Could not resolve source project for deleted file: ${csharpFilePath}`);
+        logger.warn('removeCorrespondingTsFile', `Could not resolve source project for deleted file: ${logger.shortPath(csharpFilePath)}`);
         return;
     }
     const relativePath = path.relative(path.dirname(matchingSource), csharpFilePath);
@@ -163,7 +158,6 @@ function removeCorrespondingTsFile(config, csharpFilePath) {
     const tsFilePath = path.join(outputPath, path.dirname(relativePath), tsFileName);
     if (fs.existsSync(tsFilePath)) {
         fs.unlinkSync(tsFilePath);
-        console.log(chalk.red(`  Removed: ${tsFilePath}`));
     }
 }
 /**

@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { CSharpClass, CSharpProperty, NamingConvention } from '../types/index.js';
 import type { ParseResult, TypeSharpConfig } from '../types/index.js';
-import chalk from 'chalk';
 import { generateEnum } from './generate-enum.js';
 import { logger } from '../helpers/logger.js';
 
@@ -91,10 +90,7 @@ function generateMultipleFiles(
 
   let createdCount = 0;
   let updatedCount = 0;
-  const total = parseResultsSorted.length;
-  let fileIndex = 0;
 
-  logger.debug('generateMultipleFiles', 'Generating TypeScript files...');
   for (const result of parseResultsSorted) {
     // Skip if this C# file hasn't changed
     if (changedFiles && !changedFiles.has(result.filePath)) {
@@ -130,20 +126,18 @@ function generateMultipleFiles(
       ? `${imports}\n\n${header}\n\n${content}\n`
       : `${header}\n\n${content}\n`;
 
-    // Check if file is new or updated
     const isNewFile = !fs.existsSync(filePath);
-    // Only write if content changed or file is new
     if (isNewFile || shouldWriteFile(filePath, fullContent)) {
       fs.writeFileSync(filePath, fullContent, 'utf-8');
+      if (isNewFile) createdCount++;
+      else updatedCount++;
     }
   }
 
-  // Return metrics to be logged at the end
-  const totalFiles = createdCount + updatedCount;
   return {
     created: createdCount,
     updated: updatedCount,
-    total: totalFiles
+    total: createdCount + updatedCount
   };
 }
 
@@ -324,32 +318,59 @@ function generateTypeScriptClass(cls: CSharpClass): string {
 /**
  * Generate TypeScript interface
  */
+
 function generateInterface(cls: CSharpClass): string {
-
-  const properties = cls.properties
-    .map(prop => generateProperty(prop))
-    .join('\n');
-
   // Build generic parameters for the interface
-  const genericParams = cls.genericParameters && cls.genericParameters.length > 0
+  const genericParams = cls.genericParameters?.length
     ? `<${cls.genericParameters.join(', ')}>`
     : '';
 
   // Build extends clause with generics
   let extendsClause = '';
   if (cls.inheritsFrom) {
-    const baseGenerics = cls.baseClassGenerics && cls.baseClassGenerics.length > 0
+    const baseGenerics = cls.baseClassGenerics?.length
       ? `<${cls.baseClassGenerics.join(', ')}>`
       : '';
     extendsClause = ` extends ${cls.inheritsFrom}${baseGenerics}`;
   }
 
-  return `export interface ${cls.name}${genericParams}${extendsClause} {\n${properties}\n}`;
+  const body = generateInterfaceBody(cls.properties);
+  return `export interface ${cls.name}${genericParams}${extendsClause} {\n${body}\n}`;
 }
 
 
+function generateInterfaceBody(properties: CSharpProperty[]): string {
+  const lines: string[] = [];
+  let currentRegion: string | undefined;
 
+  for (const prop of properties) {
+    const region = prop.region;
 
+    // Region opened
+    if (region !== currentRegion) {
+      // Close previous region
+      if (currentRegion !== undefined) {
+        lines.push('  // #endregion');
+        lines.push('');
+      }
+      // Open new region
+      if (region !== undefined) {
+        if (currentRegion === undefined) lines.push('');
+        lines.push(`  // #region ${region}`);
+      }
+      currentRegion = region;
+    }
+
+    lines.push(generateProperty(prop));
+  }
+
+  // Close last region
+  if (currentRegion !== undefined) {
+    lines.push('  // #endregion');
+  }
+
+  return lines.join('\n');
+}
 
 /**
  * Generate a single property

@@ -1,7 +1,7 @@
 {
   "name": "@siyavuyachagi/typesharp",
   "description": "Generate TypeScript types from C# models with TypeSharp attribute",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "license": "MIT",
   "author": "Siyavuya Chagi <syavuya08@gmail.com>",
   "repository": {

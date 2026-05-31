@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import chalk from "chalk";
+import { logger } from '../helpers/logger.js';
 /**
  * Create a sample configuration file
  */
@@ -38,7 +39,8 @@ export const createSampleConfig = (format) => {
     const allConfigFiles = ['typesharp.config.ts', 'typesharp.config.js', 'typesharp.config.json'];
     const existingConfig = allConfigFiles.find(f => fs.existsSync(f));
     if (existingConfig) {
-        console.log(chalk.yellow.bold('❗ Warning:'), chalk.white(`${existingConfig} already exists. Skipping creation.`));
+        console.log('');
+        logger.warn('createSampleConfig', `${existingConfig} already exists\n`);
         return;
     }
     fs.writeFileSync(fileName, content, 'utf-8');

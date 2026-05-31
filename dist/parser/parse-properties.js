@@ -3,6 +3,18 @@
  */
 export function parseProperties(classBody) {
     const properties = [];
+    // Build a region map: characterIndex -> regionName
+    const regionMap = buildRegionMap(classBody);
+    const getRegion = (index) => {
+        let active;
+        for (const [start, name] of regionMap) {
+            if (start <= index)
+                active = name;
+            else
+                break;
+        }
+        return active;
+    };
     let match;
     // Match property declarations with get/set/init accessors
     const propertyRegex = /public\s+([\w<>[\]?]+)\s+(\w+)\s*\{\s*(?:get;\s*)?(?:set|init);\s*\}/g;
@@ -15,7 +27,7 @@ export function parseProperties(classBody) {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index) });
     }
     // Also match computed/expression-bodied properties (with =>)
     const computedPropertyRegex = /public\s+([\w<>[\]?]+)\s+(\w+)\s*=>/g;
@@ -28,7 +40,7 @@ export function parseProperties(classBody) {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index) });
     }
     // { get { return ...; } }
     const getBlockRegex = /public\s+([\w<>[\]?]+)\s+(\w+)\s*\{\s*get\s*\{[^}]*\}\s*\}/g;
@@ -41,9 +53,27 @@ export function parseProperties(classBody) {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index) });
     }
     return properties;
+}
+/**
+ * Build a sorted map of character index -> region name from #region / #endregion blocks.
+ * Index points to where that region becomes active (or undefined after #endregion).
+ */
+function buildRegionMap(classBody) {
+    const map = new Map();
+    const regionRegex = /#region\s+(.+)|#endregion/g;
+    let match;
+    while ((match = regionRegex.exec(classBody)) !== null) {
+        if (match[0].startsWith('#region')) {
+            map.set(match.index, match[1].trim());
+        }
+        else {
+            map.set(match.index, undefined);
+        }
+    }
+    return new Map([...map.entries()].sort((a, b) => a[0] - b[0]));
 }
 /**
  * Parse positional primary constructor parameters from a C# record declaration.
@@ -383,6 +413,7 @@ function mapCSharpTypeToTypeScript(csType) {
         'string': 'string',
         'Stream': 'Blob',
         'TimeOnly': 'string',
+        'TimeSpan': 'number',
     };
     return typeMap[csType] || csType;
 }

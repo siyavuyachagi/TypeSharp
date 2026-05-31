@@ -6,7 +6,9 @@ export declare const logger: {
     warn: (location: string, message: string) => void;
     error: (location: string, message: string) => void;
     debug: (location: string, message: string) => void;
+    divider(): void;
     tree(label: string, items: string[], level?: LogLevel): void;
+    shortPath: (fullPath: string, depth?: number) => string;
 };
 export {};
 //# sourceMappingURL=logger.d.ts.map

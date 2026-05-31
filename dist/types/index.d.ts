@@ -15,6 +15,7 @@ export interface CSharpProperty {
     /** Optional message from [Obsolete("...")] */
     deprecationMessage?: string;
     genericType?: string;
+    region?: string;
 }
 /**
  * Parsed C# class, record, or enum

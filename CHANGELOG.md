@@ -11,6 +11,26 @@ TypeSharp parses C# projects directly, targeting classes and enums decorated wit
 
 ---
 
+## v0.2.3 - 2026-05-31
+
+### Summary
+
+Improved generation accuracy, richer terminal output, and two new type mapping features.
+
+### Added
+
+- **Region preservation** — `#region` / `#endregion` blocks in C# classes are now carried through to generated TypeScript interfaces as `// #region` comments, preserving logical grouping
+- **`TimeSpan` support** — maps to `number` (total milliseconds); works with nullable, arrays, and generics automatically
+
+### Fixed
+
+- **Terminal output** — logs are now column-aligned (level, location, message) with divider lines separating tree blocks for improved readability
+- **Generation counters** — `Created`, `Updated`, and `Total` metrics now correctly reflect files written during incremental and full generation runs
+
+### Removed
+
+---
+
 ## v0.2.2 - 2026-05-20
 
 ### Summary
@@ -24,7 +44,6 @@ TypeSharp parses C# projects directly, targeting classes and enums decorated wit
 ### Fixed
 
 - The "from" argument must be of type string. Received an instance of Array
-
 
 ### Removed
 

@@ -4,9 +4,6 @@ import { glob } from 'glob';
 import { ParseResult } from '../types/index.js';
 import { TypeSharpConfig } from '../types/typesharp-config.js';
 import { parseClassesFromFile } from './parse-classes-from-file.js';
-import { logger } from '../helpers/logger.js';
-
-
 
 
 
@@ -108,7 +105,5 @@ export function resolveProjectFilesFromSource(source: string | string[]): string
             throw new Error(`Unsupported source file type: "${path.basename(s)}". Expected .csproj, .sln, or .slnx`);
         }
     }
-
-    logger.tree('Resolved .csproj files', csprojFiles, 'info');
     return csprojFiles;
 }

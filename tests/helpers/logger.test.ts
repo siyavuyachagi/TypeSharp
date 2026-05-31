@@ -97,21 +97,24 @@ describe('logger shorthands', () => {
 // ─── logger.tree ──────────────────────────────────────────────────────────────
 
 describe('logger.tree()', () => {
-    it('calls console.log once for label + once per item', () => {
+    it('calls console.log correct number of times (2 dividers + label + items)', () => {
         logger.tree('Projects:', ['a.csproj', 'b.csproj', 'c.csproj'])
-        expect(consoleSpy).toHaveBeenCalledTimes(4) // 1 label + 3 items
+        // 1 divider + 1 label + 3 items + 1 divider = 6
+        expect(consoleSpy).toHaveBeenCalledTimes(6)
     })
 
     it('last item uses └── branch', () => {
         logger.tree('Files:', ['first.cs', 'last.cs'])
-        const lastCall = consoleSpy.mock.calls[2]!.join(' ')
-        expect(lastCall).toContain('└──')
+        // calls: [0] divider, [1] label, [2] first.cs, [3] last.cs, [4] divider
+        const lastItemCall = consoleSpy.mock.calls[3]!.join(' ')
+        expect(lastItemCall).toContain('└──')
     })
 
     it('non-last items use ├── branch', () => {
         logger.tree('Files:', ['first.cs', 'middle.cs', 'last.cs'])
-        const secondCall = consoleSpy.mock.calls[1]!.join(' ')
-        expect(secondCall).toContain('├──')
+        // calls: [0] divider, [1] label, [2] first.cs, [3] middle.cs, [4] last.cs, [5] divider
+        const firstItemCall = consoleSpy.mock.calls[2]!.join(' ')
+        expect(firstItemCall).toContain('├──')
     })
 
     it('each item label appears in output', () => {
@@ -121,22 +124,19 @@ describe('logger.tree()', () => {
         expect(allOutput).toContain('bar.cs')
     })
 
-    it('defaults to debug level when no level is passed', () => {
-        const spy = vi.spyOn(logger, 'log')
-        // tree doesn't call logger.log internally, so check console output contains ⧖ icon indirectly
-        // Instead verify it doesn't throw and outputs something
+    it('defaults to info level when no level is passed', () => {
         expect(() => logger.tree('label:', ['item'])).not.toThrow()
-        spy.mockRestore()
     })
 
-    it('handles an empty items array — only prints the label', () => {
+    it('handles an empty items array — only prints 2 dividers + label', () => {
         logger.tree('Empty:', [])
-        expect(consoleSpy).toHaveBeenCalledTimes(1)
+        expect(consoleSpy).toHaveBeenCalledTimes(3)
     })
 
-    it('handles a single item correctly — uses └── not ├──', () => {
+    it('handles a single item — uses └── not ├──', () => {
         logger.tree('Single:', ['only.cs'])
-        const itemCall = consoleSpy.mock.calls[1]!.join(' ')
+        // calls: [0] divider, [1] label, [2] only.cs, [3] divider
+        const itemCall = consoleSpy.mock.calls[2]!.join(' ')
         expect(itemCall).toContain('└──')
         expect(itemCall).not.toContain('├──')
     })
