@@ -285,16 +285,6 @@ function generateProperty(prop) {
  */
 function convertPropertyName(name) {
     return toCamelCase(name);
-    // switch (convention) {
-    //   case 'camel':
-    //     return toCamelCase(name);
-    //   case 'pascal':
-    //     return toPascalCase(name);
-    //   case 'snake':
-    //     return toSnakeCase(name);
-    //   default:
-    //     return name;
-    // }
 }
 /**
  * Convert file name to specified convention

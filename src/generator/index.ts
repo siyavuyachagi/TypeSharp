@@ -408,16 +408,6 @@ function generateProperty(prop: CSharpProperty): string {
  */
 function convertPropertyName(name: string): string {
   return toCamelCase(name);
-  // switch (convention) {
-  //   case 'camel':
-  //     return toCamelCase(name);
-  //   case 'pascal':
-  //     return toPascalCase(name);
-  //   case 'snake':
-  //     return toSnakeCase(name);
-  //   default:
-  //     return name;
-  // }
 }
 
 

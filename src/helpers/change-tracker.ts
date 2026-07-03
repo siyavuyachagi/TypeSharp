@@ -4,7 +4,8 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 
 const TYPESHARP_CACHE_DIR = '.typesharp';
-const HASH_SNAPSHOT_FILE = path.join(TYPESHARP_CACHE_DIR, 'hashes.json');
+const FILE_NAME = 'tracker.json';
+const HASH_SNAPSHOT_FILE = path.join(TYPESHARP_CACHE_DIR, FILE_NAME);
 
 /**
  * Load previous generation hashes

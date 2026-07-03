@@ -109,7 +109,8 @@ export async function generate(configPath?: string, incremental: boolean = true)
     }
 
     logger.info('generate', `Created: ${metrics.created} | Updated: ${metrics.updated} | Total: ${metrics.total}`);
-    logger.success('generate', 'Generation completed successfully!\n');
+    logger.success('generate', 'Generation completed successfully!');
+    logger.divider()
   } catch (error) {
     logger.error('generate', error instanceof Error ? error.message : 'An unknown error occurred');
     console.log('')
