@@ -7,7 +7,7 @@ export declare const logger: {
     error: (location: string, message: string) => void;
     debug: (location: string, message: string) => void;
     divider(): void;
-    tree(label: string, items: string[], level?: LogLevel): void;
+    tree(items: string[], methodName?: string, level?: LogLevel, label?: string): void;
     shortPath: (fullPath: string, depth?: number) => string;
 };
 export {};

@@ -97,45 +97,45 @@ describe('logger shorthands', () => {
 // ─── logger.tree ──────────────────────────────────────────────────────────────
 
 describe('logger.tree()', () => {
-    it('calls console.log correct number of times (2 dividers + label + items)', () => {
-        logger.tree('Projects:', ['a.csproj', 'b.csproj', 'c.csproj'])
-        // 1 divider + 1 label + 3 items + 1 divider = 6
-        expect(consoleSpy).toHaveBeenCalledTimes(6)
+    it('calls console.log correct number of times (log line + label + items)', () => {
+        logger.tree(['a.csproj', 'b.csproj', 'c.csproj'], 'Projects', 'info', 'Projects:')
+        // 1 log line + 1 label + 3 items = 5
+        expect(consoleSpy).toHaveBeenCalledTimes(5)
     })
 
     it('last item uses └── branch', () => {
-        logger.tree('Files:', ['first.cs', 'last.cs'])
-        // calls: [0] divider, [1] label, [2] first.cs, [3] last.cs, [4] divider
+        logger.tree(['first.cs', 'last.cs'], 'Files', 'info', 'Files:')
+        // calls: [0] log line, [1] label, [2] first.cs, [3] last.cs
         const lastItemCall = consoleSpy.mock.calls[3]!.join(' ')
         expect(lastItemCall).toContain('└──')
     })
 
     it('non-last items use ├── branch', () => {
-        logger.tree('Files:', ['first.cs', 'middle.cs', 'last.cs'])
-        // calls: [0] divider, [1] label, [2] first.cs, [3] middle.cs, [4] last.cs, [5] divider
+        logger.tree(['first.cs', 'middle.cs', 'last.cs'], 'Files', 'info', 'Files:')
+        // calls: [0] log line, [1] label, [2] first.cs, [3] middle.cs, [4] last.cs
         const firstItemCall = consoleSpy.mock.calls[2]!.join(' ')
         expect(firstItemCall).toContain('├──')
     })
 
     it('each item label appears in output', () => {
-        logger.tree('Label:', ['foo.cs', 'bar.cs'])
+        logger.tree(['foo.cs', 'bar.cs'], 'Label', 'info', 'Label:')
         const allOutput = consoleSpy.mock.calls.flat().join(' ')
         expect(allOutput).toContain('foo.cs')
         expect(allOutput).toContain('bar.cs')
     })
 
     it('defaults to info level when no level is passed', () => {
-        expect(() => logger.tree('label:', ['item'])).not.toThrow()
+        expect(() => logger.tree(['item'], 'label')).not.toThrow()
     })
 
-    it('handles an empty items array — only prints 2 dividers + label', () => {
-        logger.tree('Empty:', [])
-        expect(consoleSpy).toHaveBeenCalledTimes(3)
+    it('handles an empty items array — only prints log line + label', () => {
+        logger.tree([], 'Empty', 'info', 'Empty:')
+        expect(consoleSpy).toHaveBeenCalledTimes(2)
     })
 
     it('handles a single item — uses └── not ├──', () => {
-        logger.tree('Single:', ['only.cs'])
-        // calls: [0] divider, [1] label, [2] only.cs, [3] divider
+        logger.tree(['only.cs'], 'Single', 'info', 'Single:')
+        // calls: [0] log line, [1] label, [2] only.cs
         const itemCall = consoleSpy.mock.calls[2]!.join(' ')
         expect(itemCall).toContain('└──')
         expect(itemCall).not.toContain('├──')

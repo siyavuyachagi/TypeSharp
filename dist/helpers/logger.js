@@ -30,19 +30,23 @@ export const logger = {
     error: (location, message) => logger.log('error', location, message),
     debug: (location, message) => logger.log('debug', location, message),
     divider() {
-        console.log(chalk.gray('─'.repeat(72)));
+        console.log(chalk.gray('─'.repeat(100)));
     },
-    tree(label, items, level = 'info') {
-        logger.divider();
-        console.log(LEVELS[level](`  → ${label}`));
+    tree(items, methodName = 'generate', level = 'info', label) {
+        const icon = ICONS[level];
+        const lvlTag = LEVELS[level](pad(`[${level.toUpperCase()}]`, LEVEL_WIDTH));
+        const locTag = chalk.magenta(pad(`[${methodName}]`, LOC_WIDTH));
+        console.log(`${icon}  ${lvlTag}  ${locTag}`);
+        if (label) {
+            console.log(`${' '.repeat(40)}${chalk.white(label)}`);
+        }
         items.forEach((item, i) => {
             const isLast = i === items.length - 1;
-            const branch = chalk.gray(isLast ? '  └──' : '  ├──');
-            // Trim common long path prefix for cleaner output
+            const branch = chalk.gray(isLast ? '└──' : '├──');
+            // Align with message content (40 chars: icon(1) + spaces(2) + level(9) + spaces(2) + location(24) + spaces(2))
             const short = item.replace(/\\/g, '\\');
-            console.log(`${branch} ${chalk.white(short)}`);
+            console.log(`${' '.repeat(40)}${branch} ${chalk.white(short)}`);
         });
-        logger.divider();
     },
     shortPath: (fullPath, depth = 3) => {
         return '.../' + fullPath.split(/[\\/]/).slice(-depth).join('/');

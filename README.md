@@ -247,9 +247,9 @@ Add TypeSharp to your build scripts:
 ```json
 {
   "scripts": {
-    "generate-types": "typesharp",
     "dev": "typesharp && nuxt dev",
-    "build": "typesharp && nuxt build"
+    "build": "typesharp && nuxt build",
+    "typesharp": "npx typesharp generate"
   }
 }
 ```

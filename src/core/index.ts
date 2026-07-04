@@ -164,7 +164,7 @@ export function cleanOutputDirectory(dir: string) {
 
   const entries = fs.readdirSync(dir)
 
-  logger.tree(`Clearing output directory: ${dir}`, entries.map(e => path.join(dir, e)));
+  logger.tree(entries.map(e => path.join(dir, e)), 'cleanOutputDirectory', 'info', `Clearing output directory: ${dir}`);
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry);

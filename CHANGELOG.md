@@ -13,9 +13,11 @@ TypeSharp parses C# projects directly, targeting classes and enums decorated wit
 
 ## v0.2.4 - YYYY-MM-DD
 
-### Refactor
+### Changed
 
 - File tracker name
+- `README.md` -> package.json usage
+- **Terminal output formatting** — `tree()` method now displays aligned with standard log format using `→ [INFO] [methodName]` header followed by indented tree structure (no dividers). Optional label parameter for context above tree items.
 
 ---
 
