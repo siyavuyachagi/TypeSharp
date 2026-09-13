@@ -69,7 +69,7 @@ export const mergeWithDefaults = (config) => {
  * based on its resolved project source, naming convention, and suffix.
  * Returns undefined if no matching source project can be resolved.
  */
-function getExpectedTsFilePath(config, csharpFilePath) {
+export function getExpectedTsFilePath(config, csharpFilePath) {
     const outputPath = config.outputPath;
     const sources = Array.isArray(config.source) ? config.source : [config.source];
     const normalize = (p) => path.resolve(p).replace(/\\/g, '/');
@@ -97,6 +97,16 @@ export async function generate(configPath, incremental = true) {
         logger.success('generate', 'Configuration loaded');
         logger.info('generate', 'Parsing C# files...');
         const parseResults = await parseCSharpFiles(config);
+        // Run cleanup even when zero files currently match [TypeSharp] — otherwise
+        // deleting the last remaining tracked source leaves its stale generated
+        // .ts file behind forever, since the old early return skipped this step.
+        let changedFiles;
+        if (incremental) {
+            changedFiles = await cleanOnlyChangedOutputFiles(config, parseResults);
+        }
+        else {
+            cleanOutputDirectory(config.outputPath);
+        }
         if (parseResults.length === 0) {
             console.log('\n');
             logger.warn('generate', 'No C# files found with [TypeSharp] attribute');
@@ -104,15 +114,9 @@ export async function generate(configPath, incremental = true) {
         }
         const allClasses = parseResults.flatMap(result => result.classes);
         logger.success('generate', `Found ${allClasses.length} ${allClasses.length === 1 ? 'class' : 'classes'} with [TypeSharp] attribute`);
-        let metrics;
-        if (incremental) {
-            const changedFiles = await cleanOnlyChangedOutputFiles(config, parseResults);
-            metrics = generateTypeScriptFiles(config, parseResults, changedFiles);
-        }
-        else {
-            cleanOutputDirectory(config.outputPath);
-            metrics = generateTypeScriptFiles(config, parseResults);
-        }
+        const metrics = incremental
+            ? generateTypeScriptFiles(config, parseResults, changedFiles)
+            : generateTypeScriptFiles(config, parseResults);
         logger.info('generate', `Created: ${metrics.created} | Updated: ${metrics.updated} | Total: ${metrics.total}`);
         logger.success('generate', 'Generation completed successfully!');
         logger.divider();

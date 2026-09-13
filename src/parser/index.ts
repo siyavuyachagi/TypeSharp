@@ -31,8 +31,7 @@ export async function parseCSharpFiles(config: TypeSharpConfig): Promise<ParseRe
 
         for (const filePath of csFiles) {
             const content = fs.readFileSync(filePath, 'utf-8');
-            const includeComments = config.includeComments !== false;
-            const classes = parseClassesFromFile(content, targetAnnotation, includeComments);
+            const classes = parseClassesFromFile(content, targetAnnotation, config.includeComments);
 
             if (classes.length > 0) {
                 // Store relative path for preserving folder structure later
