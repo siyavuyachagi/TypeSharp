@@ -13,6 +13,8 @@ import { logger } from '../helpers/logger.js';
 const DEFAULT_CONFIG: Partial<TypeSharpConfig> = {
   singleOutputFile: false,
   namingConvention: 'kebab',
+  fileSuffix: '',
+  includeComments: false
 };
 
 /**

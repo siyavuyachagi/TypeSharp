@@ -21,7 +21,8 @@ export async function parseCSharpFiles(config) {
         });
         for (const filePath of csFiles) {
             const content = fs.readFileSync(filePath, 'utf-8');
-            const classes = parseClassesFromFile(content, targetAnnotation);
+            const includeComments = config.includeComments !== false;
+            const classes = parseClassesFromFile(content, targetAnnotation, includeComments);
             if (classes.length > 0) {
                 // Store relative path for preserving folder structure later
                 const relativePath = path.relative(projectDir, filePath);

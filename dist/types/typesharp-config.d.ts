@@ -51,5 +51,10 @@ export interface TypeSharpConfig {
      * ```
      */
     fileSuffix?: string;
+    /**
+     * Whether to carry `///` XML doc summaries from C# into generated.
+     * TypeScript as JSDoc comments (default: `false`).
+     */
+    includeComments?: boolean;
 }
 //# sourceMappingURL=typesharp-config.d.ts.map

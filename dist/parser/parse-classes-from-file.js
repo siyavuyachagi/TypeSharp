@@ -5,7 +5,7 @@ import { parseRecordParameters } from "./parse-properties.js";
 /**
  * Parse classes and records from a C# file content
  */
-export function parseClassesFromFile(content, targetAnnotation) {
+export function parseClassesFromFile(content, targetAnnotation, includeComments = false) {
     const classes = [];
     const cleanContent = removeComments(content);
     const annotationRegex = new RegExp(`\\[${targetAnnotation}(?:Attribute)?(?:\\(\\s*"([^"]*)"\\s*\\))?(?:\\s*,\\s*[^\\]]+)?\\]`, 'g');
@@ -17,10 +17,12 @@ export function parseClassesFromFile(content, targetAnnotation) {
         const enumMatch = afterAnnotation.match(/^(?:\[[\w]+(?:\([^)]*\))?(?:\s*,\s*[^\]]+)?\]\s*)*public\s+enum\s+(\w+)/);
         if (enumMatch) {
             const typeNameOverride = match[1] ?? undefined;
-            const enumClass = parseEnum(afterAnnotation, typeNameOverride ?? enumMatch[1]);
+            const enumClass = parseEnum(afterAnnotation, typeNameOverride ?? enumMatch[1], includeComments);
             if (enumClass) {
                 enumClass.isUnion = hasUnionAttribute(cleanContent, startIndex, afterAnnotation, match[0]);
-                enumClass.summary = extractDocSummary(cleanContent, startIndex);
+                if (includeComments) {
+                    enumClass.summary = extractDocSummary(cleanContent, startIndex);
+                }
                 classes.push(enumClass);
             }
             continue;
@@ -69,7 +71,7 @@ export function parseClassesFromFile(content, targetAnnotation) {
             // Also parse any body properties (records can have both)
             const classBody = extractClassBody(afterAnnotation);
             const bodyProperties = classBody
-                ? parseProperties(classBody)
+                ? parseProperties(classBody, includeComments)
                 : [];
             // Deduplicate: body props take priority if name clashes
             const bodyPropNames = new Set(bodyProperties.map(p => p.name));
@@ -86,7 +88,7 @@ export function parseClassesFromFile(content, targetAnnotation) {
                 isRecord: true,
                 genericParameters,
                 baseClassGenerics: resolvedInheritsFrom ? baseClassGenerics : undefined,
-                summary: extractDocSummary(cleanContent, startIndex)
+                summary: includeComments ? extractDocSummary(cleanContent, startIndex) : undefined
             });
             continue;
         }
@@ -104,7 +106,7 @@ export function parseClassesFromFile(content, targetAnnotation) {
             if (classBody) {
                 const { cleanedBody, injectedProperties } = stripNestedAnnotatedClasses(classBody, targetAnnotation);
                 const properties = [
-                    ...parseProperties(cleanedBody),
+                    ...parseProperties(cleanedBody, includeComments),
                     ...injectedProperties
                 ];
                 const genericParameters = genericParams
@@ -123,7 +125,7 @@ export function parseClassesFromFile(content, targetAnnotation) {
                     isRecord: false,
                     genericParameters,
                     baseClassGenerics: resolvedInheritsFrom ? baseClassGenerics : undefined,
-                    summary: extractDocSummary(cleanContent, startIndex)
+                    summary: includeComments ? extractDocSummary(cleanContent, startIndex) : undefined
                 });
             }
         }

@@ -10,6 +10,8 @@ import { logger } from '../helpers/logger.js';
 const DEFAULT_CONFIG = {
     singleOutputFile: false,
     namingConvention: 'kebab',
+    fileSuffix: '',
+    includeComments: false
 };
 /**
  * Load configuration from a file

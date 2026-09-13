@@ -1,7 +1,7 @@
 /**
  * Parse enum from C# content
  */
-export function parseEnum(content, enumName) {
+export function parseEnum(content, enumName, includeComments) {
     const enumBodyMatch = content.match(/enum\s+\w+\s*\{([^}]+)\}/);
     if (!enumBodyMatch)
         return null;
@@ -13,7 +13,9 @@ export function parseEnum(content, enumName) {
         if (line === '')
             continue;
         if (line.startsWith('///')) {
-            pendingSummaryLines.push(line.replace(/^\/\/\/\s?/, ''));
+            if (includeComments) {
+                pendingSummaryLines.push(line.replace(/^\/\/\/\s?/, ''));
+            }
             continue;
         }
         // Normally one member per line, but split defensively in case

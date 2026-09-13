@@ -2,7 +2,7 @@ import { CSharpProperty } from "../types/index.js";
 /**
  * Parse properties from class body
  */
-export declare function parseProperties(classBody: string): CSharpProperty[];
+export declare function parseProperties(classBody: string, includeComments: boolean): CSharpProperty[];
 /**
  * Parse positional primary constructor parameters from a C# record declaration.
  *

@@ -5,7 +5,7 @@ import { extractDocSummary } from "./parse-comments-handler.js";
 /**
  * Parse properties from class body
  */
-export function parseProperties(classBody: string): CSharpProperty[] {
+export function parseProperties(classBody: string, includeComments: boolean): CSharpProperty[] {
     const properties: CSharpProperty[] = [];
 
     // Build a region map: characterIndex -> regionName
@@ -32,7 +32,12 @@ export function parseProperties(classBody: string): CSharpProperty[] {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!), summary: extractDocSummary(classBody, match.index!) });
+        properties.push({ 
+            ...parsePropertyType(resolvedName, resolvedType), 
+            ...obs, 
+            region: getRegion(match.index!), 
+            summary: includeComments ? extractDocSummary(classBody, match.index!) : undefined 
+        });
     }
 
     // Also match computed/expression-bodied properties (with =>)
@@ -45,7 +50,12 @@ export function parseProperties(classBody: string): CSharpProperty[] {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!), summary: extractDocSummary(classBody, match.index!) });
+        properties.push({ 
+            ...parsePropertyType(resolvedName, resolvedType), 
+            ...obs, 
+            region: getRegion(match.index!), 
+            summary: includeComments ? extractDocSummary(classBody, match.index!) : undefined 
+        });
     }
 
     // { get { return ...; } }
@@ -58,7 +68,12 @@ export function parseProperties(classBody: string): CSharpProperty[] {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!), summary: extractDocSummary(classBody, match.index!) });
+        properties.push({ 
+            ...parsePropertyType(resolvedName, resolvedType), 
+            ...obs, 
+            region: getRegion(match.index!), 
+            summary: includeComments ? extractDocSummary(classBody, match.index!) : undefined 
+        });
     }
 
     return properties;

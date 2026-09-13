@@ -13,9 +13,10 @@ export const createSampleConfig = (format: 'ts' | 'js' | 'json'): void => {
             'C:/Users/User/Desktop/MyApp/MyApp.sln',
         ],
         outputPath: './app/types',
-        singleOutputFile: false,
         namingConvention: 'camel',
-        fileSuffix: ''
+        singleOutputFile: false,
+        includeComments: false,
+        fileSuffix: '',
     };
 
     let fileName: string;

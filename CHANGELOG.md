@@ -32,6 +32,11 @@ feat: enhance C# parsing with documentation support
 - Refactored enum parsing to capture summaries for enum values.
 - Introduced utility functions for comment handling and parsing enums.
 
+feat: add includeComments option to TypeSharpConfig for XML doc summaries
+
+- Introduced `includeComments` property in TypeSharpConfig to control the inclusion of XML doc summaries from C# as JSDoc comments in generated TypeScript.
+- Updated relevant functions to handle the new option, ensuring that comments are included or excluded based on the configuration.
+- Modified sample configuration and default settings to reflect the new option.
 ---
 
 ## v0.2.6 - 2026-08-22

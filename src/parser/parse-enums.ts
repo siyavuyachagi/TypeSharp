@@ -3,7 +3,7 @@ import { CSharpClass } from "../types/index.js";
 /**
  * Parse enum from C# content
  */
-export function parseEnum(content: string, enumName: string): CSharpClass | null {
+export function parseEnum(content: string, enumName: string, includeComments: boolean): CSharpClass | null {
     const enumBodyMatch = content.match(/enum\s+\w+\s*\{([^}]+)\}/);
     if (!enumBodyMatch) return null;
 
@@ -16,7 +16,9 @@ export function parseEnum(content: string, enumName: string): CSharpClass | null
         if (line === '') continue;
 
         if (line.startsWith('///')) {
-            pendingSummaryLines.push(line.replace(/^\/\/\/\s?/, ''));
+            if (includeComments) {
+                pendingSummaryLines.push(line.replace(/^\/\/\/\s?/, ''));
+            }
             continue;
         }
 
