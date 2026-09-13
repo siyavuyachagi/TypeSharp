@@ -95,6 +95,7 @@ export function parseClassesFromFile(content: string, targetAnnotation: string):
 
             classes.push({
                 name: typeNameOverride ?? className,
+                originalName: className,
                 properties: mergedProperties,
                 inheritsFrom: resolvedInheritsFrom,
                 isEnum: false,
@@ -142,6 +143,7 @@ export function parseClassesFromFile(content: string, targetAnnotation: string):
                 const typeNameOverride = match[1] ?? undefined;
                 classes.push({
                     name: typeNameOverride ?? className,
+                    originalName: className,
                     properties,
                     inheritsFrom: resolvedInheritsFrom,
                     isEnum: false,

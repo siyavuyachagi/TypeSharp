@@ -22,6 +22,7 @@ export interface CSharpProperty {
  */
 export interface CSharpClass {
     name: string;
+    originalName?: string;
     properties: CSharpProperty[];
     inheritsFrom?: string;
     isEnum: boolean;

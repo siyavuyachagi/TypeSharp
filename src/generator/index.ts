@@ -15,6 +15,8 @@ export function generateTypeScriptFiles(
 ): { created: number; updated: number; total: number } {
   const outputPath = config.outputPath;
 
+  applyTypeNameOverrides(parseResults);
+
   if (!fs.existsSync(outputPath)) {
     fs.mkdirSync(outputPath, { recursive: true });
   }
@@ -400,6 +402,57 @@ function generateProperty(prop: CSharpProperty): string {
 }
 
 
+
+
+/**
+ * Build a map of original C# class name -> TypeSharp-overridden name,
+ * then rewrite inheritsFrom and property types across all parsed classes
+ * so renamed types (e.g. [TypeSharp("GenericResult")] on Result<T>) are
+ * referenced consistently everywhere, not just at their own declaration.
+ */
+function applyTypeNameOverrides(parseResults: ParseResult[]): void {
+  const allClasses = parseResults.flatMap(r => r.classes);
+
+  // originalName -> (arity -> resolvedName). Arity disambiguates e.g.
+  // `Result` (0 params) from `Result<T>` (1 param) — same bare identifier,
+  // different C# types, possibly different [TypeSharp("...")] overrides.
+  const nameMapByArity = new Map<string, Map<number, string>>();
+  for (const cls of allClasses) {
+    if (cls.originalName && cls.originalName !== cls.name) {
+      const arity = cls.genericParameters?.length ?? 0;
+      if (!nameMapByArity.has(cls.originalName)) {
+        nameMapByArity.set(cls.originalName, new Map());
+      }
+      nameMapByArity.get(cls.originalName)!.set(arity, cls.name);
+    }
+  }
+
+  if (nameMapByArity.size === 0) return;
+
+  const resolveTypeString = (type: string): string => {
+    let resolved = type;
+    for (const [original, byArity] of nameMapByArity.entries()) {
+      for (const [arity, renamed] of byArity.entries()) {
+        const pattern = arity === 0
+          ? new RegExp(`\\b${original}\\b(?!\\s*<)`, 'g')   // bare, not followed by 
+          : new RegExp(`\\b${original}\\b(?=\\s*<)`, 'g');  // followed by <...>
+        resolved = resolved.replace(pattern, renamed);
+      }
+    }
+    return resolved;
+  };
+
+  for (const cls of allClasses) {
+    if (cls.inheritsFrom) {
+      const arity = cls.baseClassGenerics?.length ?? 0;
+      const renamed = nameMapByArity.get(cls.inheritsFrom)?.get(arity);
+      if (renamed) cls.inheritsFrom = renamed;
+    }
+    for (const prop of cls.properties) {
+      prop.type = resolveTypeString(prop.type);
+    }
+  }
+}
 
 
 

@@ -11,6 +11,16 @@ TypeSharp parses C# projects directly, targeting classes and enums decorated wit
 
 ---
 
+## v0.2.7
+
+feat: add originalName to CSharpClass and implement type name overrides
+
+- Added optional originalName property to CSharpClass interface to track original C# class names.
+- Implemented applyTypeNameOverrides function to ensure consistent referencing of renamed types across parsed classes.
+- Updated parseClassesFromFile to populate originalName when parsing class definitions.
+- Adjusted TypeScript generation logic to utilize the new originalName property for type resolution.
+- Bumped package versions to reflect changes.
+
 ## v0.2.6 - 2026-08-22
 
 ### Added
