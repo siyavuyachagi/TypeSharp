@@ -217,11 +217,9 @@ function generateTypeScriptClass(cls) {
  * Generate TypeScript interface
  */
 function generateInterface(cls) {
-    // Build generic parameters for the interface
     const genericParams = cls.genericParameters?.length
         ? `<${cls.genericParameters.join(', ')}>`
         : '';
-    // Build extends clause with generics
     let extendsClause = '';
     if (cls.inheritsFrom) {
         const baseGenerics = cls.baseClassGenerics?.length
@@ -229,8 +227,9 @@ function generateInterface(cls) {
             : '';
         extendsClause = ` extends ${cls.inheritsFrom}${baseGenerics}`;
     }
+    const docComment = cls.summary ? `/**\n * ${cls.summary}\n */\n` : '';
     const body = generateInterfaceBody(cls.properties);
-    return `export interface ${cls.name}${genericParams}${extendsClause} {\n${body}\n}`;
+    return `${docComment}export interface ${cls.name}${genericParams}${extendsClause} {\n${body}\n}`;
 }
 function generateInterfaceBody(properties) {
     const lines = [];
@@ -274,12 +273,21 @@ function generateProperty(prop) {
     if (prop.isNullable) {
         type = `${type} | null`;
     }
-    // Add @deprecated JSDoc if marked obsolete
+    const docLines = [];
+    if (prop.summary)
+        docLines.push(prop.summary);
     if (prop.isDeprecated) {
         const msg = prop.deprecationMessage ? ` ${prop.deprecationMessage}` : '';
-        return `  /** @deprecated${msg} */\n  ${propertyName}: ${type};`;
+        docLines.push(`@deprecated${msg}`);
     }
-    return `  ${propertyName}: ${type};`;
+    if (docLines.length === 0) {
+        return `  ${propertyName}: ${type};`;
+    }
+    if (docLines.length === 1) {
+        return `  /** ${docLines[0]} */\n  ${propertyName}: ${type};`;
+    }
+    const jsdoc = ['  /**', ...docLines.map(l => `   * ${l}`), '   */'].join('\n');
+    return `${jsdoc}\n  ${propertyName}: ${type};`;
 }
 /**
  * Build a map of original C# class name -> TypeSharp-overridden name,

@@ -1,3 +1,5 @@
+import { extractDocSummary, removeComments } from "./parse-comments-handler.js";
+import { parseEnum } from "./parse-enums.js";
 import { parseProperties } from "./parse-properties.js";
 import { parseRecordParameters } from "./parse-properties.js";
 /**
@@ -18,6 +20,7 @@ export function parseClassesFromFile(content, targetAnnotation) {
             const enumClass = parseEnum(afterAnnotation, typeNameOverride ?? enumMatch[1]);
             if (enumClass) {
                 enumClass.isUnion = hasUnionAttribute(cleanContent, startIndex, afterAnnotation, match[0]);
+                enumClass.summary = extractDocSummary(cleanContent, startIndex);
                 classes.push(enumClass);
             }
             continue;
@@ -51,9 +54,17 @@ export function parseClassesFromFile(content, targetAnnotation) {
                 ? baseGenerics.split(',').map(p => p.trim())
                 : undefined;
             const typeNameOverride = match[1] ?? undefined;
-            // Parse positional primary constructor parameters
-            const positionalProperties = primaryCtorParams
-                ? parseRecordParameters(primaryCtorParams)
+            // Parse positional primary constructor parameters. Strip any `///`
+            // doc-comment lines first — per-parameter summaries aren't supported
+            // yet, and (like the enum case) their commas would otherwise corrupt
+            // splitTopLevelParams. Use a separate variable so the offset math
+            // above (which relies on primaryCtorParams.length) stays correct.
+            const ctorParamsForParsing = primaryCtorParams
+                ?.split('\n')
+                .filter(line => !line.trim().startsWith('///'))
+                .join('\n');
+            const positionalProperties = ctorParamsForParsing
+                ? parseRecordParameters(ctorParamsForParsing)
                 : [];
             // Also parse any body properties (records can have both)
             const classBody = extractClassBody(afterAnnotation);
@@ -75,6 +86,7 @@ export function parseClassesFromFile(content, targetAnnotation) {
                 isRecord: true,
                 genericParameters,
                 baseClassGenerics: resolvedInheritsFrom ? baseClassGenerics : undefined,
+                summary: extractDocSummary(cleanContent, startIndex)
             });
             continue;
         }
@@ -110,7 +122,8 @@ export function parseClassesFromFile(content, targetAnnotation) {
                     isEnum: false,
                     isRecord: false,
                     genericParameters,
-                    baseClassGenerics: resolvedInheritsFrom ? baseClassGenerics : undefined
+                    baseClassGenerics: resolvedInheritsFrom ? baseClassGenerics : undefined,
+                    summary: extractDocSummary(cleanContent, startIndex)
                 });
             }
         }
@@ -144,27 +157,6 @@ function hasUnionAttribute(cleanContent, startIndex, afterAnnotation, matchText)
         break;
     }
     return false;
-}
-/**
- * Parse enum from C# content
- */
-function parseEnum(content, enumName) {
-    const enumBodyMatch = content.match(/enum\s+\w+\s*\{([^}]+)\}/);
-    if (!enumBodyMatch)
-        return null;
-    const enumBody = enumBodyMatch[1];
-    const enumValues = enumBody
-        .split(',')
-        .map(v => v.trim())
-        .filter(v => v.length > 0)
-        .map(v => v.split('=')[0].trim());
-    return {
-        name: enumName,
-        properties: [],
-        isEnum: true,
-        isRecord: false,
-        enumValues
-    };
 }
 /**
  * Extract class body between curly braces
@@ -244,14 +236,6 @@ function extractPrimaryCtorParams(content) {
         i++;
     }
     return undefined;
-}
-/**
- * Remove single-line and multi-line comments
- */
-function removeComments(content) {
-    let result = content.replace(/\/\*[\s\S]*?\*\//g, '');
-    result = result.replace(/\/\/.*/g, '');
-    return result;
 }
 /**
  * Strip nested annotated classes from a class body and inject reference properties.

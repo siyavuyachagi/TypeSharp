@@ -21,6 +21,19 @@ feat: add originalName to CSharpClass and implement type name overrides
 - Adjusted TypeScript generation logic to utilize the new originalName property for type resolution.
 - Bumped package versions to reflect changes.
 
+feat: enhance C# parsing with documentation support
+
+- Added `summary` field to `CSharpProperty` and `CSharpClass` interfaces to store documentation summaries.
+- Implemented `extractDocSummary` function to retrieve XML documentation comments from C# code.
+- Updated `parseClassesFromFile` to extract summaries for classes and enums.
+- Enhanced `generateEnum` to include summaries in generated TypeScript enums.
+- Modified `generateInterface` to prepend documentation comments to generated interfaces.
+- Updated property generation to include summaries in JSDoc comments.
+- Refactored enum parsing to capture summaries for enum values.
+- Introduced utility functions for comment handling and parsing enums.
+
+---
+
 ## v0.2.6 - 2026-08-22
 
 ### Added

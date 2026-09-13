@@ -4,16 +4,21 @@ import { CSharpClass } from "../types/index.js";
  * Generate TypeScript enum
  */
 export function generateEnum(cls: CSharpClass): string {
-  if (cls.isUnion) {
-      return generateUnionEnum(cls);
-  }
+    if (cls.isUnion) {
+        return generateUnionEnum(cls);
+    }
 
-  const values = cls.enumValues || [];
-  const enumValues = values
-      .map(v => `  ${v} = '${v}'`)
-      .join(',\n');
+    const values = cls.enumValues || [];
+    const enumValues = values
+        .map(v => {
+            const summary = cls.enumValueSummaries?.[v];
+            return summary
+                ? `  /**\n   * ${summary}\n   */\n  ${v} = '${v}'`
+                : `  ${v} = '${v}'`;
+        })
+        .join(',\n');
 
-  return `export enum ${cls.name} {\n${enumValues}\n}`;
+    return `export enum ${cls.name} {\n${enumValues}\n}`;
 }
 
 

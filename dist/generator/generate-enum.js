@@ -7,7 +7,12 @@ export function generateEnum(cls) {
     }
     const values = cls.enumValues || [];
     const enumValues = values
-        .map(v => `  ${v} = '${v}'`)
+        .map(v => {
+        const summary = cls.enumValueSummaries?.[v];
+        return summary
+            ? `  /**\n   * ${summary}\n   */\n  ${v} = '${v}'`
+            : `  ${v} = '${v}'`;
+    })
         .join(',\n');
     return `export enum ${cls.name} {\n${enumValues}\n}`;
 }

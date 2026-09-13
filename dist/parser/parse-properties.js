@@ -1,3 +1,4 @@
+import { extractDocSummary } from "./parse-comments-handler.js";
 /**
  * Parse properties from class body
  */
@@ -27,7 +28,7 @@ export function parseProperties(classBody) {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index) });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index), summary: extractDocSummary(classBody, match.index) });
     }
     // Also match computed/expression-bodied properties (with =>)
     const computedPropertyRegex = /public\s+([\w<>[\](), ?]+)\s+(\w+)\s*=>/g;
@@ -40,7 +41,7 @@ export function parseProperties(classBody) {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index) });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index), summary: extractDocSummary(classBody, match.index) });
     }
     // { get { return ...; } }
     const getBlockRegex = /public\s+([\w<>[\](), ?]+)\s+(\w+)\s*\{\s*get\s*\{[^}]*\}\s*\}/g;
@@ -53,7 +54,7 @@ export function parseProperties(classBody) {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index) });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index), summary: extractDocSummary(classBody, match.index) });
     }
     return properties;
 }

@@ -1,4 +1,5 @@
 import { CSharpProperty } from "../types/index.js";
+import { extractDocSummary } from "./parse-comments-handler.js";
 
 
 /**
@@ -31,7 +32,7 @@ export function parseProperties(classBody: string): CSharpProperty[] {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!) });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!), summary: extractDocSummary(classBody, match.index!) });
     }
 
     // Also match computed/expression-bodied properties (with =>)
@@ -44,7 +45,7 @@ export function parseProperties(classBody: string): CSharpProperty[] {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!) });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!), summary: extractDocSummary(classBody, match.index!) });
     }
 
     // { get { return ...; } }
@@ -57,7 +58,7 @@ export function parseProperties(classBody: string): CSharpProperty[] {
         const resolvedName = tsAttrs.overrideName ?? name;
         const resolvedType = tsAttrs.overrideType ?? type;
         const obs = extractObsoleteInfo(classBody, match.index!);
-        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!) });
+        properties.push({ ...parsePropertyType(resolvedName, resolvedType), ...obs, region: getRegion(match.index!), summary: extractDocSummary(classBody, match.index!) });
     }
 
     return properties;

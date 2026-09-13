@@ -17,6 +17,7 @@ export interface CSharpProperty {
   deprecationMessage?: string;
   genericType?: string;
   region?: string;
+  summary?: string;
 }
 
 /**
@@ -28,13 +29,15 @@ export interface CSharpClass {
   properties: CSharpProperty[];
   inheritsFrom?: string;
   isEnum: boolean;
+  enumValues?: string[];
+  enumValueSummaries?: Record<string, string>;
   /** Whether the source type was a C# record (record class / record struct / positional record) */
   isRecord: boolean;
   /** Whether the enum should be generated as a const + union type instead of a TS enum */
   isUnion?: boolean;
-  enumValues?: string[];
   genericParameters?: string[];
   baseClassGenerics?: string[];
+  summary?: string;
 }
 
 /**

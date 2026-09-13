@@ -16,6 +16,7 @@ export interface CSharpProperty {
     deprecationMessage?: string;
     genericType?: string;
     region?: string;
+    summary?: string;
 }
 /**
  * Parsed C# class, record, or enum
@@ -26,13 +27,15 @@ export interface CSharpClass {
     properties: CSharpProperty[];
     inheritsFrom?: string;
     isEnum: boolean;
+    enumValues?: string[];
+    enumValueSummaries?: Record<string, string>;
     /** Whether the source type was a C# record (record class / record struct / positional record) */
     isRecord: boolean;
     /** Whether the enum should be generated as a const + union type instead of a TS enum */
     isUnion?: boolean;
-    enumValues?: string[];
     genericParameters?: string[];
     baseClassGenerics?: string[];
+    summary?: string;
 }
 /**
  * Result of parsing C# files
