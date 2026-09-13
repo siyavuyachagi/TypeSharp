@@ -79,6 +79,36 @@ export const mergeWithDefaults = (config: Partial<TypeSharpConfig>): TypeSharpCo
 
 
 
+/**
+ * Compute the expected generated .ts output path for a given C# source file,
+ * based on its resolved project source, naming convention, and suffix.
+ * Returns undefined if no matching source project can be resolved.
+ */
+function getExpectedTsFilePath(config: TypeSharpConfig, csharpFilePath: string): string | undefined {
+  const outputPath = config.outputPath;
+  const sources = Array.isArray(config.source) ? config.source : [config.source];
+
+  const normalize = (p: string) => path.resolve(p).replace(/\\/g, '/');
+  const normalizedCsharpPath = normalize(csharpFilePath);
+  const matchingSource = sources.find(s => normalizedCsharpPath.startsWith(normalize(path.dirname(s))));
+
+  if (!matchingSource) return undefined;
+
+  const relativePath = path.relative(path.dirname(matchingSource), csharpFilePath);
+  const fileName = path.basename(relativePath, '.cs');
+
+  const fileConvention = typeof config.namingConvention === 'string'
+    ? config.namingConvention
+    : config.namingConvention?.file ?? 'camel';
+
+  let baseName = fileName;
+  if (config.fileSuffix) {
+    baseName = `${baseName}${config.fileSuffix}`;
+  }
+
+  const tsFileName = convertFileName(baseName, fileConvention) + '.ts';
+  return path.join(outputPath, path.dirname(relativePath), tsFileName);
+}
 
 
 export async function generate(configPath?: string, incremental: boolean = true): Promise<void> {
@@ -146,13 +176,27 @@ async function cleanOnlyChangedOutputFiles(
     }
   }
 
+  // Hash-unchanged doesn't mean output-present — someone may have deleted or
+  // moved the generated file directly. Catch that here so it gets regenerated
+  // instead of the tracker silently rewriting itself with matching hashes.
+  const changedSet = new Set(changed);
+  if (!config.singleOutputFile) {
+    for (const file of csharpFiles) {
+      if (changedSet.has(file)) continue;
+      const expectedTsPath = getExpectedTsFilePath(config, file);
+      if (expectedTsPath && !fs.existsSync(expectedTsPath)) {
+        changedSet.add(file);
+      }
+    }
+  }
+
   const currentHashes = new Map<string, string>();
   for (const file of csharpFiles) {
     currentHashes.set(file, computeFileHash(file));
   }
   savePreviousHashes(currentHashes);
 
-  return new Set(changed);
+  return changedSet;
 }
 
 
@@ -184,27 +228,12 @@ export function cleanOutputDirectory(dir: string) {
  * Remove TypeScript output file(s) for a deleted C# source file
  */
 function removeCorrespondingTsFile(config: TypeSharpConfig, csharpFilePath: string): void {
-  const outputPath = config.outputPath;
-  const sources = Array.isArray(config.source) ? config.source : [config.source];
-  const matchingSource = sources.find(s => csharpFilePath.startsWith(path.dirname(s)));
-  if (!matchingSource) {
+  const tsFilePath = getExpectedTsFilePath(config, csharpFilePath);
+
+  if (!tsFilePath) {
     logger.warn('removeCorrespondingTsFile', `Could not resolve source project for deleted file: ${logger.shortPath(csharpFilePath)}`)
     return;
   }
-  const relativePath = path.relative(path.dirname(matchingSource), csharpFilePath);
-  const fileName = path.basename(relativePath, '.cs');
-
-  const fileConvention = typeof config.namingConvention === 'string'
-    ? config.namingConvention
-    : config.namingConvention?.file ?? 'camel';
-
-  let baseName = fileName;
-  if (config.fileSuffix) {
-    baseName = `${baseName}${config.fileSuffix}`;
-  }
-
-  const tsFileName = convertFileName(baseName, fileConvention) + '.ts';
-  const tsFilePath = path.join(outputPath, path.dirname(relativePath), tsFileName);
 
   if (fs.existsSync(tsFilePath)) {
     fs.unlinkSync(tsFilePath);

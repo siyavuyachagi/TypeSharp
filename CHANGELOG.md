@@ -11,32 +11,20 @@ TypeSharp parses C# projects directly, targeting classes and enums decorated wit
 
 ---
 
-## v0.2.7
+## v0.2.7 - 2026-09-13
 
-feat: add originalName to CSharpClass and implement type name overrides
+### Added
 
-- Added optional originalName property to CSharpClass interface to track original C# class names.
-- Implemented applyTypeNameOverrides function to ensure consistent referencing of renamed types across parsed classes.
-- Updated parseClassesFromFile to populate originalName when parsing class definitions.
-- Adjusted TypeScript generation logic to utilize the new originalName property for type resolution.
-- Bumped package versions to reflect changes.
+- **Type name override resolution** — classes/records renamed via `[TypeSharp("...")]` are now referenced consistently everywhere (inheritance, cross-file imports, generic property types), not just at their own declaration. `CSharpClass` now tracks `originalName` so overrides can be resolved after parsing.
+- **XML doc summary support** — `///` summaries on classes, records, enums, enum members, and properties are now carried into generated TypeScript as JSDoc comments.
+- **`includeComments` config option** — controls whether XML doc summaries are included as JSDoc in generated output (default: `false`).
+- **`getExpectedTsFilePath` helper** — centralizes resolution of a C# source file's expected generated `.ts` output path.
 
-feat: enhance C# parsing with documentation support
+### Fixed
 
-- Added `summary` field to `CSharpProperty` and `CSharpClass` interfaces to store documentation summaries.
-- Implemented `extractDocSummary` function to retrieve XML documentation comments from C# code.
-- Updated `parseClassesFromFile` to extract summaries for classes and enums.
-- Enhanced `generateEnum` to include summaries in generated TypeScript enums.
-- Modified `generateInterface` to prepend documentation comments to generated interfaces.
-- Updated property generation to include summaries in JSDoc comments.
-- Refactored enum parsing to capture summaries for enum values.
-- Introduced utility functions for comment handling and parsing enums.
+- **Incremental tracker skipping deleted source files on Windows `.sln` projects** — output-file cleanup compared a forward-slash source path against a native-separator project path, so the match silently failed and the stale `.ts` file was never removed; paths are now normalized before comparing.
+- **Deleted/moved output files not regenerated in incremental mode** — the tracker only compared C# source hashes, so removing a generated `.ts` file without touching its source left it missing until a full (non-incremental) run; incremental generation now also checks that each expected output file still exists and regenerates it if not.
 
-feat: add includeComments option to TypeSharpConfig for XML doc summaries
-
-- Introduced `includeComments` property in TypeSharpConfig to control the inclusion of XML doc summaries from C# as JSDoc comments in generated TypeScript.
-- Updated relevant functions to handle the new option, ensuring that comments are included or excluded based on the configuration.
-- Modified sample configuration and default settings to reflect the new option.
 ---
 
 ## v0.2.6 - 2026-08-22
